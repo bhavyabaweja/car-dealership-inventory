@@ -7,8 +7,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // server.ts only wires real implementations together and starts listening.
-      exclude: ["src/generated/**", "src/**/*.test.ts", "src/server.ts"],
+      // server.ts and seed.ts only wire real implementations together; the logic they call is tested.
+      exclude: ["src/generated/**", "src/**/*.test.ts", "src/server.ts", "src/seed.ts"],
     },
     projects: [
       {
