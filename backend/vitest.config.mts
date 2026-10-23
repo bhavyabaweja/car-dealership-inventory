@@ -11,9 +11,9 @@ export default defineConfig({
     },
     projects: [
       {
-        // Fast tests with in-memory fakes: no database needed.
+        // Fast tests with in-memory fakes, including HTTP tests through supertest: no database needed.
         extends: true,
-        test: { name: "unit", include: ["src/**/*.test.ts"] },
+        test: { name: "unit", include: ["src/**/*.test.ts", "tests/api/**/*.test.ts"] },
       },
       {
         // Tests against the real PostgreSQL test database (see docker-compose.yml).
