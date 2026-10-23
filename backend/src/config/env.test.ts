@@ -30,6 +30,14 @@ describe("loadConfig", () => {
     ["PORT is not a number", { ...valid, PORT: "abc" }, /PORT/],
     ["PORT is out of range", { ...valid, PORT: "70000" }, /PORT/],
     ["JWT_EXPIRES_IN is not a duration", { ...valid, JWT_EXPIRES_IN: "soon" }, /JWT_EXPIRES_IN/],
+    // A zero lifetime would issue tokens that are already expired, so nobody could ever log in.
+    ["JWT_EXPIRES_IN is zero", { ...valid, JWT_EXPIRES_IN: "0s" }, /JWT_EXPIRES_IN/],
+    ["JWT_EXPIRES_IN is zero with leading zeros", { ...valid, JWT_EXPIRES_IN: "00h" }, /JWT_EXPIRES_IN/],
+    [
+      "JWT_SECRET is still the placeholder from .env.example",
+      { ...valid, JWT_SECRET: "replace-me-with-a-long-random-string-of-at-least-32-characters" },
+      /JWT_SECRET.*placeholder/s,
+    ],
   ])("fails fast and names the setting when %s", (_label, env, expected) => {
     expect(() => loadConfig(env)).toThrow(expected);
   });
