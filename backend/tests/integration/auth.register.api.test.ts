@@ -4,10 +4,18 @@ import { createApp } from "../../src/app";
 import { createPrismaClient } from "../../src/db/prisma";
 import { AuthService } from "../../src/modules/auth/auth.service";
 import { BcryptPasswordHasher } from "../../src/modules/auth/bcrypt-password-hasher";
+import { JwtTokenService } from "../../src/modules/auth/jwt-token-service";
 import { PrismaUserRepository } from "../../src/modules/auth/prisma-user.repository";
+import { TEST_JWT_SECRET } from "../support/jwt";
 
 const prisma = createPrismaClient(process.env.DATABASE_URL!);
-const app = createApp({ authService: new AuthService(new PrismaUserRepository(prisma), new BcryptPasswordHasher(4)) });
+const app = createApp({
+  authService: new AuthService(
+    new PrismaUserRepository(prisma),
+    new BcryptPasswordHasher(4),
+    new JwtTokenService(TEST_JWT_SECRET),
+  ),
+});
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe('TRUNCATE TABLE "User"');

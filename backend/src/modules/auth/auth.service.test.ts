@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { FakePasswordHasher, InMemoryUserRepository } from "../../../tests/support/auth-test-doubles";
+import {
+  FakePasswordHasher,
+  FakeTokenService,
+  InMemoryUserRepository,
+} from "../../../tests/support/auth-test-doubles";
 import { ConflictError, ValidationError } from "../../errors/app-error";
 import { AuthService } from "./auth.service";
 
@@ -9,7 +13,7 @@ describe("AuthService.register", () => {
 
   beforeEach(() => {
     users = new InMemoryUserRepository();
-    service = new AuthService(users, new FakePasswordHasher());
+    service = new AuthService(users, new FakePasswordHasher(), new FakeTokenService());
   });
 
   it("creates a USER and returns it without the password hash", async () => {

@@ -1,14 +1,9 @@
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../src/app";
-import { AuthService } from "../../src/modules/auth/auth.service";
-import { FakePasswordHasher, InMemoryUserRepository } from "../support/auth-test-doubles";
+import { buildTestApp } from "../support/build-test-app";
 
-function buildApp() {
-  const users = new InMemoryUserRepository();
-  const app = createApp({ authService: new AuthService(users, new FakePasswordHasher()) });
-  return { app, users };
-}
+const buildApp = buildTestApp;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -103,13 +98,10 @@ describe("app-wide behaviour", () => {
 
   it("hides internal error details behind a generic 500 and logs them server-side", async () => {
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-    const app = createApp({
-      authService: {
-        register: async () => {
-          throw new Error("connect ECONNREFUSED db:5432 password=hunter2");
-        },
-      },
-    });
+    const failure = async () => {
+      throw new Error("connect ECONNREFUSED db:5432 password=hunter2");
+    };
+    const app = createApp({ authService: { register: failure, login: failure } });
 
     const response = await request(app).post("/api/auth/register").send({ email: "jane@example.com", password: "Sup3rSecret!" });
 

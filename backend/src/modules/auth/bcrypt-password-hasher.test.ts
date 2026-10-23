@@ -20,4 +20,17 @@ describe("BcryptPasswordHasher", () => {
 
     expect(first).not.toBe(second);
   });
+
+  describe("compare", () => {
+    it("accepts the original password and rejects any other", async () => {
+      const hash = await hasher.hash("Sup3rSecret!");
+
+      expect(await hasher.compare("Sup3rSecret!", hash)).toBe(true);
+      expect(await hasher.compare("sup3rsecret!", hash)).toBe(false);
+    });
+
+    it("returns false, rather than throwing, when the stored hash is malformed", async () => {
+      expect(await hasher.compare("Sup3rSecret!", "not-a-bcrypt-hash")).toBe(false);
+    });
+  });
 });

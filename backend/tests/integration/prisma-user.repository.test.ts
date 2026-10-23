@@ -3,8 +3,10 @@ import { createPrismaClient } from "../../src/db/prisma";
 import { ConflictError } from "../../src/errors/app-error";
 import { AuthService } from "../../src/modules/auth/auth.service";
 import { BcryptPasswordHasher } from "../../src/modules/auth/bcrypt-password-hasher";
+import { JwtTokenService } from "../../src/modules/auth/jwt-token-service";
 import { PrismaUserRepository } from "../../src/modules/auth/prisma-user.repository";
 import { EmailAlreadyExistsError } from "../../src/modules/auth/user.repository";
+import { TEST_JWT_SECRET } from "../support/jwt";
 
 const prisma = createPrismaClient(process.env.DATABASE_URL!);
 const users = new PrismaUserRepository(prisma);
@@ -57,6 +59,18 @@ describe("PrismaUserRepository", () => {
   });
 });
 
+describe("PrismaUserRepository.findByEmail", () => {
+  it("returns the stored user, including the password hash needed to verify a login", async () => {
+    const created = await users.create({ email: "jane@example.com", passwordHash: "hash", role: "ADMIN" });
+
+    expect(await users.findByEmail("jane@example.com")).toEqual(created);
+  });
+
+  it("returns null when no user has that email", async () => {
+    expect(await users.findByEmail("nobody@example.com")).toBeNull();
+  });
+});
+
 describe("database-level email rules", () => {
   it("rejects a duplicate email even when inserted outside the application", async () => {
     await insertRaw("jane@example.com");
@@ -72,7 +86,7 @@ describe("database-level email rules", () => {
 });
 
 describe("AuthService.register against the real database", () => {
-  const service = new AuthService(users, new BcryptPasswordHasher(4));
+  const service = new AuthService(users, new BcryptPasswordHasher(4), new JwtTokenService(TEST_JWT_SECRET));
 
   it("stores a bcrypt hash and never the password", async () => {
     await service.register({ email: "Jane@Example.com", password: "Sup3rSecret!" });
