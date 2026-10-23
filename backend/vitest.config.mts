@@ -1,13 +1,32 @@
+import "dotenv/config";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
       exclude: ["src/generated/**", "src/**/*.test.ts"],
     },
+    projects: [
+      {
+        // Fast tests with in-memory fakes: no database needed.
+        extends: true,
+        test: { name: "unit", include: ["src/**/*.test.ts"] },
+      },
+      {
+        // Tests against the real PostgreSQL test database (see docker-compose.yml).
+        // Files run one at a time because they share, and truncate, the same tables.
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["tests/integration/**/*.test.ts"],
+          globalSetup: ["tests/global-setup.ts"],
+          fileParallelism: false,
+          env: { DATABASE_URL: process.env.TEST_DATABASE_URL ?? "" },
+        },
+      },
+    ],
   },
 });
