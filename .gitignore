@@ -1,0 +1,19 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Environment files (commit only the .env.example templates)
+.env
+.env.*
+!.env.example
+
+# Generated Prisma client
+backend/src/generated/
+
+# Logs and OS/editor files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

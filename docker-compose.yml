@@ -1,0 +1,25 @@
+# Local development database. The credentials below are for local use only
+# and the port is bound to localhost, so the database is not exposed to the network.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: car-dealership-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: car_dealer
+      POSTGRES_PASSWORD: car_dealer
+      POSTGRES_DB: car_dealership_dev
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, on first start of an empty volume, to create the test database.
+      - ./docker/postgres/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U car_dealer -d car_dealership_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

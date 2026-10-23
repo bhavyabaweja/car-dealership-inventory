@@ -1,0 +1,12 @@
+// Models are added alongside the feature that needs them (User with auth,
+// Vehicle with the vehicle endpoints), each introduced through a migration.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
