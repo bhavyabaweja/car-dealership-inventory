@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
 import { ExpiredTokenError, InvalidTokenError, type TokenPayload, type TokenService } from "./token-service";
-import type { Role } from "./user.repository";
+import { ROLES, type Role } from "./user.repository";
 
 /** The one algorithm accepted for signing and verifying; never taken from the token itself. */
 const ALGORITHM = "HS256";
-const ROLES: readonly Role[] = ["USER", "ADMIN"];
 
 function isRole(value: unknown): value is Role {
-  return ROLES.includes(value as Role);
+  return (ROLES as readonly unknown[]).includes(value);
 }
 
 export class JwtTokenService implements TokenService {

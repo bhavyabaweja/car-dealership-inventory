@@ -1,27 +1,9 @@
 import request from "supertest";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { createApp } from "../../src/app";
-import { createPrismaClient } from "../../src/db/prisma";
-import { AuthService } from "../../src/modules/auth/auth.service";
-import { BcryptPasswordHasher } from "../../src/modules/auth/bcrypt-password-hasher";
+import { describe, expect, it } from "vitest";
 import { ensureAdmin } from "../../src/modules/auth/ensure-admin";
-import { JwtTokenService } from "../../src/modules/auth/jwt-token-service";
-import { PrismaUserRepository } from "../../src/modules/auth/prisma-user.repository";
-import { TEST_JWT_SECRET } from "../support/jwt";
+import { app, hasher, prisma, tokens, useCleanDatabase, users } from "../support/integration";
 
-const prisma = createPrismaClient(process.env.DATABASE_URL!);
-const users = new PrismaUserRepository(prisma);
-const hasher = new BcryptPasswordHasher(4);
-const tokens = new JwtTokenService(TEST_JWT_SECRET);
-const app = createApp({ authService: new AuthService(users, hasher, tokens) });
-
-beforeEach(async () => {
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE "User"');
-});
-
-afterAll(async () => {
-  await prisma.$disconnect();
-});
+useCleanDatabase();
 
 describe("ensureAdmin with the real database", () => {
   it("creates an admin who can then log in and receives an ADMIN token", async () => {

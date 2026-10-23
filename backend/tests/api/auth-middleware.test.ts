@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { authenticate, requireAdmin } from "../../src/middleware/authenticate";
 import { errorHandler } from "../../src/middleware/error-handler";
 import { JwtTokenService } from "../../src/modules/auth/jwt-token-service";
@@ -19,6 +19,10 @@ function buildGuardedApp(tokens: TokenService) {
 }
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("authenticate", () => {
   const tokens = new FakeTokenService();
@@ -79,16 +83,11 @@ describe("authenticate", () => {
         throw new TypeError("bug in the token service");
       },
     };
-    const quiet = () => {};
-    const original = console.error;
-    console.error = quiet;
+    vi.spyOn(console, "error").mockImplementation(() => {});
 
-    try {
-      const response = await request(buildGuardedApp(broken)).get("/protected").set(bearer("anything"));
-      expect(response.status).toBe(500);
-    } finally {
-      console.error = original;
-    }
+    const response = await request(buildGuardedApp(broken)).get("/protected").set(bearer("anything"));
+
+    expect(response.status).toBe(500);
   });
 
   it("works with real JWTs: accepts a signed token and rejects a tampered one", async () => {

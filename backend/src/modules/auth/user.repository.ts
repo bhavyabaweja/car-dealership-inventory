@@ -1,4 +1,6 @@
-export type Role = "USER" | "ADMIN";
+/** The single list of roles; the Role type and runtime checks such as token validation derive from it. */
+export const ROLES = ["USER", "ADMIN"] as const;
+export type Role = (typeof ROLES)[number];
 
 /** What is needed to create a user. The email must already be normalized (trimmed, lowercase). */
 export interface NewUser {

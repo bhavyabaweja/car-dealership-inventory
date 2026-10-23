@@ -22,6 +22,3 @@ export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().min(1, "Email is required").max(MAX_EMAIL_LENGTH),
   password: z.string().min(1, "Password is required").refine(withinBcryptLimit, bcryptLimitMessage),
 });
-
-export type RegisterInput = z.output<typeof registerSchema>;
-export type LoginInput = z.output<typeof loginSchema>;

@@ -1,28 +1,10 @@
 import request from "supertest";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { createApp } from "../../src/app";
-import { createPrismaClient } from "../../src/db/prisma";
-import { AuthService } from "../../src/modules/auth/auth.service";
-import { BcryptPasswordHasher } from "../../src/modules/auth/bcrypt-password-hasher";
-import { JwtTokenService } from "../../src/modules/auth/jwt-token-service";
-import { PrismaUserRepository } from "../../src/modules/auth/prisma-user.repository";
-import { TEST_JWT_SECRET } from "../support/jwt";
+import { describe, expect, it } from "vitest";
+import { app, hasher, prisma, tokens, useCleanDatabase } from "../support/integration";
 
-const prisma = createPrismaClient(process.env.DATABASE_URL!);
-const tokens = new JwtTokenService(TEST_JWT_SECRET);
-const app = createApp({
-  authService: new AuthService(new PrismaUserRepository(prisma), new BcryptPasswordHasher(4), tokens),
-});
+useCleanDatabase();
 
 const credentials = { email: "jane@example.com", password: "Sup3rSecret!" };
-
-beforeEach(async () => {
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE "User"');
-});
-
-afterAll(async () => {
-  await prisma.$disconnect();
-});
 
 describe("POST /api/auth/login with the real database", () => {
   it("logs in a registered user and returns a verifiable JWT for them", async () => {
@@ -36,7 +18,7 @@ describe("POST /api/auth/login with the real database", () => {
   });
 
   it("gives an admin created directly in the database an ADMIN token", async () => {
-    const hash = await new BcryptPasswordHasher(4).hash("Adm1nPassw0rd!");
+    const hash = await hasher.hash("Adm1nPassw0rd!");
     await prisma.$executeRaw`
       INSERT INTO "User" (id, email, "passwordHash", role)
       VALUES (gen_random_uuid()::text, 'admin@example.com', ${hash}, 'ADMIN')`;

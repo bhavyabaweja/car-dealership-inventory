@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { defineConfig } from "vitest/config";
 
+// The test database created by docker-compose.yml, so the tests run without a .env file.
+process.env.TEST_DATABASE_URL ??= "postgresql://car_dealer:car_dealer@localhost:5432/car_dealership_test";
+
 export default defineConfig({
   test: {
     environment: "node",
@@ -25,7 +28,7 @@ export default defineConfig({
           include: ["tests/integration/**/*.test.ts"],
           globalSetup: ["tests/global-setup.ts"],
           fileParallelism: false,
-          env: { DATABASE_URL: process.env.TEST_DATABASE_URL ?? "" },
+          env: { DATABASE_URL: process.env.TEST_DATABASE_URL },
         },
       },
     ],
