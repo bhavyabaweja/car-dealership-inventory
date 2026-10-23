@@ -1,29 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { FakePasswordHasher, InMemoryUserRepository } from "../../../tests/support/auth-test-doubles";
 import { ConflictError, ValidationError } from "../../errors/app-error";
 import { AuthService } from "./auth.service";
-import type { PasswordHasher } from "./password-hasher";
-import { EmailAlreadyExistsError, type NewUser, type User, type UserRepository } from "./user.repository";
-
-/** Mirrors the database contract: emails are unique, and a duplicate insert is rejected. */
-class InMemoryUserRepository implements UserRepository {
-  readonly users: User[] = [];
-
-  async create(data: NewUser): Promise<User> {
-    if (this.users.some((user) => user.email === data.email)) {
-      throw new EmailAlreadyExistsError(data.email);
-    }
-    const user: User = { id: `user-${this.users.length + 1}`, createdAt: new Date(), ...data };
-    this.users.push(user);
-    return user;
-  }
-}
-
-/** Predictable stand-in so tests can see exactly what reaches the repository. */
-class FakePasswordHasher implements PasswordHasher {
-  async hash(plain: string): Promise<string> {
-    return `hashed:${plain}`;
-  }
-}
 
 describe("AuthService.register", () => {
   let users: InMemoryUserRepository;
