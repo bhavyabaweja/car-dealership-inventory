@@ -111,6 +111,24 @@ describe("app-wide behaviour", () => {
     expect(logged).toHaveBeenCalled();
   });
 
+  it.each([
+    ["a body that is not valid for its declared compression", "br", 400],
+    ["a compression the server does not support", "x-unsupported", 415],
+  ])("reports %s as a client error, not as a server failure", async (_label, encoding, expectedStatus) => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = buildApp();
+
+    const response = await request(app)
+      .post("/api/auth/register")
+      .set("Content-Type", "application/json")
+      .set("Content-Encoding", encoding)
+      .send("{}");
+
+    expect(response.status).toBe(expectedStatus);
+    expect(response.body).toEqual({ error: { code: "BAD_REQUEST", message: expect.any(String) } });
+    expect(logged).not.toHaveBeenCalled(); // the client's mistake is not an incident
+  });
+
   it("does not advertise the framework in response headers", async () => {
     const { app } = buildApp();
 
