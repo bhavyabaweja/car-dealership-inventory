@@ -32,6 +32,13 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+/** The caller is known but not allowed to do this (HTTP 403). */
+export class ForbiddenError extends AppError {
+  constructor(message: string, code = "FORBIDDEN") {
+    super(403, code, message);
+  }
+}
+
 /** The request conflicts with existing data, such as a duplicate email (HTTP 409). */
 export class ConflictError extends AppError {
   constructor(message: string, code = "CONFLICT") {
