@@ -1,5 +1,4 @@
-// Models are added alongside the feature that needs them (User with auth,
-// Vehicle with the vehicle endpoints), each introduced through a migration.
+// Models are added alongside the feature that needs them, each through a migration.
 
 generator client {
   provider     = "prisma-client"
@@ -9,4 +8,18 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  /// Always stored lowercase; see the User_email_is_lowercase check in the create_user migration.
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
 }
