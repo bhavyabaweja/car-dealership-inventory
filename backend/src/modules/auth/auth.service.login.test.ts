@@ -60,12 +60,15 @@ describe("AuthService.login", () => {
       expect(unknownEmail.message).toBe(wrongPassword.message);
     });
 
-    it("still checks a password hash for an unknown email, so response time does not reveal it", async () => {
+    it("compares against a genuine decoy hash for an unknown email, so response time does not reveal it", async () => {
       const before = hasher.compareCalls;
 
       await service.login({ email: "nobody@example.com", password: "whatever-password" }).catch(() => undefined);
 
       expect(hasher.compareCalls).toBe(before + 1);
+      // Comparing against "" or a made-up string would be quick; it must be a hash the hasher itself produced.
+      expect(hasher.issued.has(hasher.lastComparedHash!)).toBe(true);
+      expect(hasher.lastComparedHash).not.toBe("hashed:Sup3rSecret!"); // and not a real user's hash
     });
   });
 

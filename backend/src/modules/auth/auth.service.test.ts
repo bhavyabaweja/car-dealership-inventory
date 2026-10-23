@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FakePasswordHasher,
   FakeTokenService,
@@ -52,6 +52,13 @@ describe("AuthService.register", () => {
       ConflictError,
     );
     expect(users.users).toHaveLength(1);
+  });
+
+  it("lets an unexpected repository failure through instead of reporting it as a duplicate email", async () => {
+    const outage = new Error("connection lost");
+    vi.spyOn(users, "create").mockRejectedValue(outage);
+
+    await expect(service.register({ email: "jane@example.com", password: "Sup3rSecret!" })).rejects.toBe(outage);
   });
 
   describe("input validation", () => {

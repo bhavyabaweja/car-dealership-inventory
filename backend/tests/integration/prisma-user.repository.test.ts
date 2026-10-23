@@ -47,6 +47,14 @@ describe("PrismaUserRepository", () => {
     );
   });
 
+  it("does not mistake another database failure for a duplicate email", async () => {
+    // Violates the lowercase CHECK constraint: the database refuses it, but not as a unique violation.
+    const attempt = users.create({ email: "JANE@example.com", passwordHash: "hash", role: "USER" });
+
+    await expect(attempt).rejects.toThrow();
+    await expect(attempt).rejects.not.toBeInstanceOf(EmailAlreadyExistsError);
+  });
+
   it("lets only one of two simultaneous creates for the same email succeed", async () => {
     const attempts = await Promise.allSettled([
       users.create({ email: "jane@example.com", passwordHash: "a", role: "USER" }),

@@ -30,13 +30,20 @@ export class InMemoryUserRepository implements UserRepository {
 export class FakePasswordHasher implements PasswordHasher {
   /** How many comparisons ran, so tests can check that unknown users cost the same work as known ones. */
   compareCalls = 0;
+  /** The hash given to the latest comparison. */
+  lastComparedHash: string | undefined;
+  /** Every hash this hasher has produced: a comparison against anything else did not do a real hash's work. */
+  readonly issued = new Set<string>();
 
   async hash(plain: string): Promise<string> {
-    return `hashed:${plain}`;
+    const hash = `hashed:${plain}`;
+    this.issued.add(hash);
+    return hash;
   }
 
   async compare(plain: string, hash: string): Promise<boolean> {
     this.compareCalls += 1;
+    this.lastComparedHash = hash;
     return hash === `hashed:${plain}`;
   }
 }
