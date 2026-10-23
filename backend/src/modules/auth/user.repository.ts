@@ -23,4 +23,7 @@ export class EmailAlreadyExistsError extends Error {
 export interface UserRepository {
   /** @throws EmailAlreadyExistsError if a user with the same email exists. */
   create(data: NewUser): Promise<User>;
+
+  /** @param email already normalized (trimmed, lowercase). */
+  findByEmail(email: string): Promise<User | null>;
 }

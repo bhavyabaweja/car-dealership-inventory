@@ -25,6 +25,13 @@ export class ValidationError extends AppError {
   }
 }
 
+/** The caller is not authenticated: no valid credentials or token (HTTP 401). */
+export class UnauthorizedError extends AppError {
+  constructor(message: string, code = "UNAUTHENTICATED") {
+    super(401, code, message);
+  }
+}
+
 /** The request conflicts with existing data, such as a duplicate email (HTTP 409). */
 export class ConflictError extends AppError {
   constructor(message: string, code = "CONFLICT") {

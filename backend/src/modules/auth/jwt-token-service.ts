@@ -11,13 +11,18 @@ function isRole(value: unknown): value is Role {
 }
 
 export class JwtTokenService implements TokenService {
+  /** @param expiresIn a duration like "1h" or "30m"; the format is validated when the config is loaded. */
   constructor(
     private readonly secret: string,
-    private readonly expiresIn: jwt.SignOptions["expiresIn"] = "1h",
+    private readonly expiresIn: string = "1h",
   ) {}
 
   sign({ sub, role }: TokenPayload): string {
-    return jwt.sign({ role }, this.secret, { subject: sub, expiresIn: this.expiresIn, algorithm: ALGORITHM });
+    return jwt.sign({ role }, this.secret, {
+      subject: sub,
+      expiresIn: this.expiresIn as jwt.SignOptions["expiresIn"],
+      algorithm: ALGORITHM,
+    });
   }
 
   verify(token: string): TokenPayload {

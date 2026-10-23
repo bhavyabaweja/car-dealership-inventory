@@ -1,21 +1,23 @@
 import "dotenv/config";
 import { createApp } from "./app";
+import { loadConfig } from "./config/env";
 import { createPrismaClient } from "./db/prisma";
 import { AuthService } from "./modules/auth/auth.service";
 import { BcryptPasswordHasher } from "./modules/auth/bcrypt-password-hasher";
+import { JwtTokenService } from "./modules/auth/jwt-token-service";
 import { PrismaUserRepository } from "./modules/auth/prisma-user.repository";
 
 // Composition root: the only place that picks concrete implementations and starts listening.
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set. Copy backend/.env.example to backend/.env.");
-}
-const port = Number(process.env.PORT ?? 3000);
+const config = loadConfig();
 
-const prisma = createPrismaClient(databaseUrl);
-const authService = new AuthService(new PrismaUserRepository(prisma), new BcryptPasswordHasher());
-const server = createApp({ authService }).listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+const prisma = createPrismaClient(config.databaseUrl);
+const authService = new AuthService(
+  new PrismaUserRepository(prisma),
+  new BcryptPasswordHasher(),
+  new JwtTokenService(config.jwtSecret, config.jwtExpiresIn),
+);
+const server = createApp({ authService }).listen(config.port, () => {
+  console.log(`API listening on http://localhost:${config.port}`);
 });
 
 function shutdown(): void {
