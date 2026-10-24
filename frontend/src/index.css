@@ -17,3 +17,21 @@
     font-size: max(16px, 1em);
   }
 }
+
+/* A notification slides up a little as it appears; people who ask for less motion get none. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+.toast-in {
+  animation: toast-in 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-in {
+    animation: none;
+  }
+}

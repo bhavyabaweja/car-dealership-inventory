@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
-import { AuthProvider } from "./auth/AuthProvider";
+import { AppProviders } from "./AppProviders";
 import { GuestOnly, RequireAuth } from "./auth/guards";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -20,9 +20,9 @@ export function AppRoutes() {
 export function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <AppProviders>
         <AppRoutes />
-      </AuthProvider>
+      </AppProviders>
     </BrowserRouter>
   );
 }

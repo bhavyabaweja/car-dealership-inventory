@@ -148,15 +148,22 @@ describe("useVehicles", () => {
       expect(firstSignal.aborted).toBe(true);
     });
 
-    it("does not treat a cancelled request as a failure", async () => {
+    it("does not show an error for a cancelled request, not even while its replacement is still loading", async () => {
       const api = fakeVehiclesApi();
-      api.find.mockImplementationOnce((_filters, signal) => new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(abortError()))));
+      const replacement = deferred<Vehicle[]>();
+      api.find
+        .mockImplementationOnce((_filters, signal) => new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(abortError()))))
+        .mockReturnValueOnce(replacement.promise);
       const { result, rerender } = setup({ make: "t" }, api);
 
       rerender({ filters: { make: "toy" } });
+      await act(async () => {}); // let the cancelled request's rejection reach the hook
 
-      await waitFor(() => expect(result.current.status).toBe("ready"));
+      expect(result.current.status).not.toBe("error"); // checked now, not after the replacement hides it
       expect(result.current.error).toBeUndefined();
+
+      await act(async () => replacement.resolve([vehicle()]));
+      expect(result.current.status).toBe("ready");
     });
   });
 

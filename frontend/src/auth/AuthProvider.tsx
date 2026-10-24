@@ -39,7 +39,10 @@ interface AuthProviderProps {
   now?: () => number;
 }
 
-export function AuthProvider({ children, authApi, storage = browserStorage(), now = Date.now }: AuthProviderProps) {
+export function AuthProvider({ children, authApi, storage: storageProp, now = Date.now }: AuthProviderProps) {
+  // Chosen once: a fresh stand-in on every render would change every callback below, and with it
+  // everything that depends on them, such as the API client.
+  const storage = useMemo(() => storageProp ?? browserStorage(), [storageProp]);
   const api = useMemo(
     () => authApi ?? createAuthApi(createApiClient({ getToken: () => null, onUnauthorized: () => undefined })),
     [authApi],

@@ -1,5 +1,4 @@
-import { act, render, renderHook, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider, useToast } from "./Toasts";
 
@@ -19,7 +18,7 @@ function setup() {
       <Buttons />
     </ToastProvider>,
   );
-  return userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  // fireEvent, not user-event: with a fake clock, Testing Library's async helpers wait on a real timer that never fires.
 }
 
 describe("toasts", () => {
@@ -30,19 +29,19 @@ describe("toasts", () => {
     vi.useRealTimers();
   });
 
-  it("shows a message in a labelled live region, so screen readers announce it", async () => {
-    const user = setup();
+  it("shows a message in a labelled live region, so screen readers announce it", () => {
+    setup();
 
-    await user.click(screen.getByRole("button", { name: "buy" }));
+    fireEvent.click(screen.getByRole("button", { name: "buy" }));
 
     const region = screen.getByRole("region", { name: "Notifications" });
     expect(region).toHaveAttribute("aria-live", "polite");
     expect(region).toHaveTextContent("Purchased Toyota Camry");
   });
 
-  it("removes a success message by itself after a few seconds", async () => {
-    const user = setup();
-    await user.click(screen.getByRole("button", { name: "buy" }));
+  it("removes a success message by itself after a few seconds", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "buy" }));
 
     act(() => void vi.advanceTimersByTime(3_900));
     expect(screen.getByText("Purchased Toyota Camry")).toBeInTheDocument();
@@ -51,9 +50,9 @@ describe("toasts", () => {
     expect(screen.queryByText("Purchased Toyota Camry")).not.toBeInTheDocument();
   });
 
-  it("leaves an error up longer than a success, and announces it as an alert", async () => {
-    const user = setup();
-    await user.click(screen.getByRole("button", { name: "fail" }));
+  it("leaves an error up longer than a success, and announces it as an alert", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "fail" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("Only 0 left in stock");
 
@@ -64,20 +63,20 @@ describe("toasts", () => {
     expect(screen.queryByText("Only 0 left in stock")).not.toBeInTheDocument();
   });
 
-  it("can be dismissed by hand", async () => {
-    const user = setup();
-    await user.click(screen.getByRole("button", { name: "buy" }));
+  it("can be dismissed by hand", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "buy" }));
 
-    await user.click(screen.getByRole("button", { name: "Dismiss notification" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss notification" }));
 
     expect(screen.queryByText("Purchased Toyota Camry")).not.toBeInTheDocument();
   });
 
-  it("stacks several messages, each going away on its own schedule", async () => {
-    const user = setup();
-    await user.click(screen.getByRole("button", { name: "buy" }));
+  it("stacks several messages, each going away on its own schedule", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "buy" }));
     act(() => void vi.advanceTimersByTime(2_000));
-    await user.click(screen.getByRole("button", { name: "fail" }));
+    fireEvent.click(screen.getByRole("button", { name: "fail" }));
 
     expect(screen.getByText("Purchased Toyota Camry")).toBeInTheDocument();
     expect(screen.getByText("Only 0 left in stock")).toBeInTheDocument();
