@@ -32,14 +32,26 @@ async function fill(fields: Record<string, string>) {
 const goodVehicle = { Make: "Toyota", Model: "Camry", Category: "Sedan", "Price (USD)": "25000", "Quantity in stock": "5" };
 
 describe("who can manage the inventory", () => {
-  it("shows a regular customer none of the management controls", async () => {
+  it("shows a regular customer a Purchase button on every vehicle, and none of the management controls", async () => {
     openDashboard("USER");
     await screen.findAllByRole("article");
+
+    expect(screen.getAllByRole("button", { name: /^Purchase / })).toHaveLength(3);
+    expect((await cardOf("Toyota Camry")).getByRole("button", { name: "Purchase Toyota Camry" })).toBeEnabled();
 
     expect(screen.queryByRole("button", { name: "Add vehicle" })).not.toBeInTheDocument();
     for (const verb of ["Edit", "Restock", "Delete"]) {
       expect(screen.queryByRole("button", { name: new RegExp(`^${verb} `) })).not.toBeInTheDocument();
     }
+  });
+
+  it("keeps an administrator's dashboard about the inventory: no Purchase button anywhere, however much is in stock", async () => {
+    openDashboard("ADMIN");
+    await screen.findAllByRole("article");
+
+    expect(screen.getAllByRole("article")).toHaveLength(3); // a sold-out vehicle is among them
+    expect(screen.queryByRole("button", { name: /^Purchase / })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Buying/ })).not.toBeInTheDocument();
   });
 
   it("gives an administrator an Add button and Edit, Restock and Delete on every vehicle, named for the vehicle", async () => {
@@ -332,7 +344,7 @@ describe("restocking a vehicle", () => {
     expect(await screen.findByText("Restocked Toyota Camry: 15 in stock.")).toBeInTheDocument();
   });
 
-  it("brings a sold-out vehicle back, so it can be bought again", async () => {
+  it("brings a sold-out vehicle back into stock, still without a Purchase button for the administrator", async () => {
     const { api } = openDashboard();
     api.restock.mockResolvedValue(vehicle({ id: "v-civic", make: "Honda", model: "Civic", price: "22000.00", quantity: 3 }));
     await openRestockDialog("Honda Civic");
@@ -342,7 +354,8 @@ describe("restocking a vehicle", () => {
 
     const civic = await cardOf("Honda Civic");
     expect(await civic.findByText("Only 3 left")).toBeInTheDocument();
-    expect(civic.getByRole("button", { name: "Purchase Honda Civic" })).toBeEnabled();
+    expect(civic.queryByRole("button", { name: /^Purchase / })).not.toBeInTheDocument();
+    expect(civic.getByRole("button", { name: "Restock Honda Civic" })).toBeEnabled();
   });
 
   it.each([[""], ["0"], ["-3"], ["2.5"], ["abc"], ["100001"]])("explains %j and sends nothing", async (text) => {
