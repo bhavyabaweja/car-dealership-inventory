@@ -28,7 +28,7 @@ describe("RegisterPage", () => {
 
     await createAccount("jane@example.com", "Sup3rSecret!");
 
-    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
     expect(authApi.register).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
     expect(authApi.login).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
   });
@@ -131,6 +131,6 @@ describe("RegisterPage", () => {
   it("sends someone who is already signed in to the dashboard instead", () => {
     renderApp("/register", { stored: storedSession() });
 
-    expect(screen.getByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
   });
 });

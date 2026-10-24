@@ -14,7 +14,7 @@ const openDashboard = (api = fakeVehiclesApi(), role: "USER" | "ADMIN" = "USER")
 
 /** The names of the vehicles on screen, in order. */
 const shown = () => screen.getAllByRole("article").map((card) => within(card).getByRole("heading").textContent);
-const categories = () => screen.getByRole("group", { name: "Browse by category" });
+const categories = () => screen.getByRole("group", { name: "Filter by category" });
 const tab = (name: string | RegExp) => within(categories()).getByRole("button", { name });
 const stockSwitch = () => screen.getByRole("switch", { name: "In stock only" });
 const chooseSort = (label: string) => user().selectOptions(screen.getByRole("combobox", { name: "Sort by" }), label);
@@ -90,7 +90,7 @@ describe("category tabs", () => {
 
     await screen.findByText("No vehicles available yet.");
 
-    expect(screen.queryByRole("group", { name: "Browse by category" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Filter by category" })).not.toBeInTheDocument();
   });
 });
 

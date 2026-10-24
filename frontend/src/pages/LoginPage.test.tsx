@@ -36,7 +36,7 @@ describe("LoginPage", () => {
 
     await signInAs("jane@example.com", "Sup3rSecret!");
 
-    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
     expect(screen.getByTestId("location")).toHaveTextContent("/");
   });
@@ -46,7 +46,7 @@ describe("LoginPage", () => {
 
     await signInAs("jane@example.com", "Sup3rSecret!");
 
-    await screen.findByRole("heading", { name: "Vehicles" });
+    await screen.findByRole("heading", { name: "Available inventory" });
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toyota");
   });
 
@@ -102,7 +102,7 @@ describe("LoginPage", () => {
       await user.type(screen.getByLabelText("Password"), "Sup3rSecret!");
       await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-      await screen.findByRole("heading", { name: "Vehicles" });
+      await screen.findByRole("heading", { name: "Available inventory" });
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
@@ -124,7 +124,7 @@ describe("LoginPage", () => {
 
   it("explains why the person is back at the login page after their session expired", async () => {
     const { auth } = renderApp("/", { stored: storedSession() });
-    await screen.findByRole("heading", { name: "Vehicles" });
+    await screen.findByRole("heading", { name: "Available inventory" });
 
     act(() => auth.current!.expireSession());
 

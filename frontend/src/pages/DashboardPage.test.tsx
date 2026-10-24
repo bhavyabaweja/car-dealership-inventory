@@ -54,7 +54,7 @@ describe("routing", () => {
   it.each([["/no/such/page"], ["/vehicles/123"]])("sends %s to the home page", (path) => {
     renderApp(path, { stored: storedSession() });
 
-    expect(screen.getByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
   });
 });

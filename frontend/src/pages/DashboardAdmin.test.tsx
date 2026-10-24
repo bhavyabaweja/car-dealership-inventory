@@ -302,7 +302,7 @@ describe("editing a vehicle", () => {
     expect(await screen.findByText("Toyota Camry: Vehicle not found")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("article", { name: "Toyota Camry" })).not.toBeInTheDocument());
-    expect(screen.getByRole("heading", { level: 2, name: "Vehicles" })).toHaveFocus(); // the Edit button is gone
+    expect(screen.getByRole("heading", { level: 2, name: "Available inventory" })).toHaveFocus(); // the Edit button is gone
   });
 
   it("returns the cursor to the Edit button it came from", async () => {
@@ -445,7 +445,7 @@ describe("deleting a vehicle", () => {
     await user().click(dialog().getByRole("button", { name: "Delete vehicle" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(screen.getByRole("heading", { level: 2, name: "Vehicles" })).toHaveFocus();
+    expect(screen.getByRole("heading", { level: 2, name: "Available inventory" })).toHaveFocus();
   });
 
   it("leaves the vehicle alone on Cancel or Escape", async () => {
