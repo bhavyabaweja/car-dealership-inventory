@@ -8,6 +8,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { InventoryControls } from "../components/InventoryControls";
 import { RestockDialog } from "../components/RestockDialog";
 import { SearchFilters } from "../components/SearchFilters";
 import { useToast } from "../components/Toasts";
@@ -17,6 +18,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useVehicles } from "../hooks/useVehicles";
 import { messageFor } from "../lib/errors";
+import { applyView, categoryTabs, defaultView, type InventoryView } from "../lib/inventoryView";
 import { countActive, emptyFilters, type FilterInputs, filtersFromParams, paramsFromFilters, toFilters } from "../lib/filters";
 
 /** Failures after which the list on screen is out of date and worth refreshing. */
@@ -61,6 +63,13 @@ export function DashboardPage() {
 
   const searching = countActive(settled) > 0;
   const clearFilters = () => setInputs(emptyFilters);
+
+  // A view over what the search returned. A chosen category that is no longer there (its last vehicle was
+  // deleted, or a new search has none of it) quietly means "all", so the list never looks mysteriously empty.
+  const [view, setView] = useState<InventoryView>(defaultView);
+  const tabs = useMemo(() => categoryTabs(vehicles, view.inStockOnly), [vehicles, view.inStockOnly]);
+  const category = tabs.some((tab) => tab.key === view.category) ? view.category : null;
+  const visible = useMemo(() => applyView(vehicles, { ...view, category }), [vehicles, view, category]);
 
   function setBusy(id: string, busy: boolean) {
     setPurchasing((current) => {
@@ -165,8 +174,14 @@ export function DashboardPage() {
         </div>
 
         <p aria-live="polite" className="mt-4 min-h-5 text-sm text-slate-600">
-          {status === "ready" && vehicles.length > 0 && `${vehicles.length} ${vehicles.length === 1 ? "vehicle" : "vehicles"}`}
+          {status === "ready" && visible.length > 0 && `${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}
         </p>
+
+        {status === "ready" && vehicles.length > 0 && (
+          <div className="mt-2">
+            <InventoryControls tabs={tabs} total={tabs.reduce((sum, tab) => sum + tab.count, 0)} view={{ ...view, category }} onChange={setView} />
+          </div>
+        )}
 
         <div className="mt-2">
           {status === "loading" && (
@@ -209,9 +224,19 @@ export function DashboardPage() {
             </div>
           )}
 
-          {status === "ready" && vehicles.length > 0 && (
+          {status === "ready" && vehicles.length > 0 && visible.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+              <p className="font-medium text-slate-900">No vehicles in this view.</p>
+              <p className="mt-1 text-sm text-slate-600">Try another category, or turn off "In stock only".</p>
+              <Button variant="secondary" className="mt-4" onClick={() => setView(defaultView)}>
+                Show everything
+              </Button>
+            </div>
+          )}
+
+          {status === "ready" && visible.length > 0 && (
             <ul className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
-              {vehicles.map((vehicle) => (
+              {visible.map((vehicle) => (
                 <li key={vehicle.id}>
                   {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
                   <VehicleCard

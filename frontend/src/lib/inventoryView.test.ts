@@ -20,6 +20,15 @@ describe("categoryTabs", () => {
     ]);
   });
 
+  it("puts a bigger category before one that comes earlier in the alphabet", () => {
+    const tabs = categoryTabs(
+      [vehicle({ id: "a", category: "Sedan" }), vehicle({ id: "b", category: "Truck" }), vehicle({ id: "c", category: "Truck" })],
+      false,
+    );
+
+    expect(tabs.map((tab) => tab.label)).toEqual(["Truck", "Sedan"]);
+  });
+
   it("treats spellings that differ only in case or spacing as one category, keeping the first spelling seen", () => {
     const tabs = categoryTabs(
       [vehicle({ id: "a", category: "Sedan" }), vehicle({ id: "b", category: " sedan " }), vehicle({ id: "c", category: "SEDAN" })],

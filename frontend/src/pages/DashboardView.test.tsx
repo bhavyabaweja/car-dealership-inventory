@@ -14,7 +14,7 @@ const openDashboard = (api = fakeVehiclesApi(), role: "USER" | "ADMIN" = "USER")
 
 /** The names of the vehicles on screen, in order. */
 const shown = () => screen.getAllByRole("article").map((card) => within(card).getByRole("heading").textContent);
-const categories = () => screen.getByRole("group", { name: "Category" });
+const categories = () => screen.getByRole("group", { name: "Browse by category" });
 const tab = (name: string | RegExp) => within(categories()).getByRole("button", { name });
 const stockSwitch = () => screen.getByRole("switch", { name: "In stock only" });
 const chooseSort = (label: string) => user().selectOptions(screen.getByRole("combobox", { name: "Sort by" }), label);
@@ -25,9 +25,9 @@ describe("category tabs", () => {
     await screen.findAllByRole("article");
 
     expect(within(categories()).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "All inventory3",
-      "Sedan2",
-      "SUV1",
+      "All inventory 3",
+      "Sedan 2",
+      "SUV 1",
     ]);
     expect(tab("All inventory 3")).toHaveAttribute("aria-pressed", "true");
     expect(tab("Sedan 2")).toHaveAttribute("aria-pressed", "false");
@@ -66,7 +66,7 @@ describe("category tabs", () => {
     await user().type(screen.getByLabelText("Make"), "Honda");
 
     await waitFor(() => expect(shown()).toEqual(["Honda Civic"]));
-    expect(within(categories()).getAllByRole("button").map((button) => button.textContent)).toEqual(["All inventory1", "Sedan1"]);
+    expect(within(categories()).getAllByRole("button").map((button) => button.textContent)).toEqual(["All inventory 1", "Sedan 1"]);
   });
 
   it("fall back to All when the chosen category disappears, as when its last vehicle is deleted", async () => {
@@ -90,7 +90,7 @@ describe("category tabs", () => {
 
     await screen.findByText("No vehicles available yet.");
 
-    expect(screen.queryByRole("group", { name: "Category" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Browse by category" })).not.toBeInTheDocument();
   });
 });
 
