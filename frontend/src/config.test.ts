@@ -61,5 +61,25 @@ describe("readConfig", () => {
       expect(readConfig({ VITE_API_URL: "https://api.example.com/" }, vi.fn()).apiBaseUrl).toBe("https://api.example.com");
       expect(readConfig({ VITE_API_URL: "https://api.example.com" }, vi.fn()).apiBaseUrl).toBe("https://api.example.com");
     });
+
+    it("accepts an http or https address, such as the hosted API or a local one", () => {
+      const warn = vi.fn();
+
+      expect(readConfig({ VITE_API_URL: "https://car-api.onrender.com" }, warn).apiBaseUrl).toBe("https://car-api.onrender.com");
+      expect(readConfig({ VITE_API_URL: "http://localhost:3000" }, warn).apiBaseUrl).toBe("http://localhost:3000");
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    // Without a scheme the browser reads "car-api.onrender.com/api/..." as a path on the page's own site, so every call would
+    // quietly go to the wrong place. Say so, rather than leave a person to work it out from 404s.
+    it.each([["car-api.onrender.com"], ["//car-api.onrender.com"], ["ftp://car-api.onrender.com"]])(
+      "warns about %s, which is not an http(s) address, and uses the page's own origin instead",
+      (value) => {
+        const warn = vi.fn();
+
+        expect(readConfig({ VITE_API_URL: value }, warn).apiBaseUrl).toBe("");
+        expect(warn.mock.calls[0]?.[0]).toContain("VITE_API_URL");
+      },
+    );
   });
 });
