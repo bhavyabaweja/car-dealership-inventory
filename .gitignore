@@ -17,3 +17,6 @@ backend/src/generated/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local MCP configuration holds API keys: never commit it
+.mcp.json
