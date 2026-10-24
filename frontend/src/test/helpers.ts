@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import type { AuthApi } from "../api/auth";
-import type { Role, User } from "../api/types";
+import type { VehiclesApi } from "../api/vehicles";
+import type { Role, User, Vehicle } from "../api/types";
 
 /** A fixed "now" for tests, in milliseconds. */
 export const NOW = Date.UTC(2026, 9, 24, 12, 0, 0);
@@ -53,4 +54,32 @@ export function fakeAuthApi() {
     login: vi.fn(async (_email: string, _password: string) => ({ token: freshToken(), user: userWithRole("USER") })),
     register: vi.fn(async (_email: string, _password: string) => userWithRole("USER")),
   } satisfies Record<keyof AuthApi, unknown>;
+}
+/** A vehicle for tests; override only what the test cares about. */
+export const vehicle = (overrides: Partial<Vehicle> = {}): Vehicle => ({
+  id: "v-camry",
+  make: "Toyota",
+  model: "Camry",
+  category: "Sedan",
+  price: "25000.00",
+  quantity: 5,
+  ...overrides,
+});
+
+export const sampleVehicles = (): Vehicle[] => [
+  vehicle(),
+  vehicle({ id: "v-rav4", model: "RAV4", category: "SUV", price: "32000.50", quantity: 2 }),
+  vehicle({ id: "v-civic", make: "Honda", model: "Civic", price: "22000.00", quantity: 0 }),
+];
+
+/** A vehicles API that records calls and lists the sample vehicles; tests change the answers per case. */
+export function fakeVehiclesApi() {
+  return {
+    find: vi.fn(async (_filters: unknown, _signal?: AbortSignal) => sampleVehicles()),
+    create: vi.fn(async (data: Omit<Vehicle, "id">) => ({ id: "v-new", ...data })),
+    update: vi.fn(async (id: string, changes: Partial<Vehicle>) => ({ ...vehicle(), id, ...changes })),
+    remove: vi.fn(async (_id: string) => undefined),
+    purchase: vi.fn(async (id: string, _quantity?: number) => vehicle({ id, quantity: 4 })),
+    restock: vi.fn(async (id: string, quantity: number) => vehicle({ id, quantity })),
+  } satisfies Record<keyof VehiclesApi, unknown>;
 }
