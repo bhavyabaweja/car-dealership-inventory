@@ -9,13 +9,15 @@ const link =
 const heading = "font-display text-sm font-semibold tracking-wider text-white uppercase";
 
 interface SiteFooterProps {
+  /** Whether the page has a categories section to link to. */
+  hasCategories: boolean;
   /** The categories the vehicles on screen have, to link to. */
   categories: CategoryTab[];
   onChooseCategory: (key: string) => void;
 }
 
 /** The foot of the page. Only things that are true: where to go, who is signed in, and how prices and pictures should be read. */
-export function SiteFooter({ categories, onChooseCategory }: SiteFooterProps) {
+export function SiteFooter({ hasCategories, categories, onChooseCategory }: SiteFooterProps) {
   const { isAdmin } = useAuth();
 
   return (
@@ -66,11 +68,13 @@ export function SiteFooter({ categories, onChooseCategory }: SiteFooterProps) {
                   All inventory
                 </a>
               </li>
-              <li>
-                <a className={link} href="#categories">
-                  Browse categories
-                </a>
-              </li>
+              {hasCategories && (
+                <li>
+                  <a className={link} href="#categories">
+                    Browse categories
+                  </a>
+                </li>
+              )}
               <li>
                 <a className={link} href="#features">
                   About

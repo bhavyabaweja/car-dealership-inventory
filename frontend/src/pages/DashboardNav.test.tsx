@@ -72,6 +72,8 @@ describe("the menu on a phone", () => {
     expect(screen.queryByRole("navigation", { name: "Mobile" })).not.toBeInTheDocument();
 
     await user().click(menuButton());
+    within(screen.getByRole("navigation", { name: "Mobile" })).getAllByRole("link")[0]!.focus(); // the cursor is in the menu
+    expect(menuButton()).not.toHaveFocus();
     fireEvent.keyDown(screen.getByRole("navigation", { name: "Mobile" }), { key: "Escape" });
     expect(screen.queryByRole("navigation", { name: "Mobile" })).not.toBeInTheDocument();
     expect(menuButton()).toHaveFocus();

@@ -21,7 +21,7 @@ const FEATURES = [
 
 export function FeaturesStrip() {
   return (
-    <section aria-labelledby="features-title" className="mx-auto max-w-7xl px-5 pb-16 md:px-12">
+    <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-28 px-5 pb-16 md:px-12">
       <h2 id="features-title" className="sr-only">
         How the inventory works
       </h2>

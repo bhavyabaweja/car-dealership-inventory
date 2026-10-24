@@ -83,6 +83,7 @@ export function DashboardPage() {
 
   // What is in stock per category, for the Browse by category cards and the footer's links.
   const available = useMemo(() => categoryTabs(vehicles, true), [vehicles]);
+  const showCategories = status === "ready" && available.length > 0;
   const suggestions = useMemo(
     () => ({ makes: [...new Set(vehicles.map((vehicle) => vehicle.make.trim()))].sort((a, b) => a.localeCompare(b)), categories: available.map((tab) => tab.label) }),
     [vehicles, available],
@@ -193,7 +194,7 @@ export function DashboardPage() {
 
   return (
     <div id="top">
-      <AppHeader />
+      <AppHeader hasCategories={showCategories} />
       <main>
         <HeroSection>
           <SearchFilters
@@ -207,7 +208,7 @@ export function DashboardPage() {
           />
         </HeroSection>
 
-        {status === "ready" && available.length > 0 && (
+        {showCategories && (
           <CategoryCards categories={available} chosen={category} onChoose={(key) => chooseCategory(key, { toggle: true })} />
         )}
 
@@ -312,7 +313,7 @@ export function DashboardPage() {
 
         <FeaturesStrip />
       </main>
-      <SiteFooter categories={available} onChooseCategory={(key) => chooseCategory(key, { toggle: false })} />
+      <SiteFooter hasCategories={showCategories} categories={available} onChooseCategory={(key) => chooseCategory(key, { toggle: false })} />
 
       {/* Each dialog exists only while open, so it always starts fresh. */}
       {panel?.kind === "add" && (
