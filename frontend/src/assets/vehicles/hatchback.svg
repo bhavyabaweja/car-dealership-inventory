@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d3a66"/><stop offset="1" stop-color="#121a38"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8" stop-opacity=".35"/><stop offset="1" stop-color="#0b1229" stop-opacity=".9"/></linearGradient>
+    <radialGradient id="floor" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#38bdf8" stop-opacity=".35"/><stop offset="1" stop-color="#38bdf8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="330" cy="304" rx="290" ry="26" fill="url(#floor)"/>
+  <path d="M60 262 L68 236 C74 220 94 212 124 206 L190 198 C214 170 244 150 286 148 L388 148 C420 150 440 166 456 184 L478 214 L560 216 C586 220 598 232 600 250 L604 262 Z" fill="url(#body)" stroke="#38bdf8" stroke-opacity=".7" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M206 196 C226 174 250 162 282 160 L318 160 L318 196 Z" fill="url(#glass)" stroke="#38bdf8" stroke-opacity=".45" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M332 160 L384 160 C406 162 422 174 436 196 L332 196 Z" fill="url(#glass)" stroke="#38bdf8" stroke-opacity=".45" stroke-width="2" stroke-linejoin="round"/>
+  
+  <rect x="588" y="228" width="16" height="7" rx="3.5" fill="#38bdf8"/>
+  <rect x="52" y="230" width="12" height="6" rx="3" fill="#f87171" fill-opacity=".85"/>
+  <circle cx="168" cy="268" r="46" fill="#060d24"/><circle cx="168" cy="268" r="38" fill="#0b1229" stroke="#38bdf8" stroke-width="3"/><line x1="168" y1="268" x2="198.0" y2="268.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="168" y1="268" x2="183.0" y2="294.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="168" y1="268" x2="153.0" y2="294.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="168" y1="268" x2="138.0" y2="268.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="168" y1="268" x2="153.0" y2="242.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="168" y1="268" x2="183.0" y2="242.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><circle cx="168" cy="268" r="11.9" fill="#141a32" stroke="#38bdf8" stroke-opacity=".7" stroke-width="2"/>
+  <circle cx="480" cy="268" r="46" fill="#060d24"/><circle cx="480" cy="268" r="38" fill="#0b1229" stroke="#38bdf8" stroke-width="3"/><line x1="480" y1="268" x2="510.0" y2="268.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="480" y1="268" x2="495.0" y2="294.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="480" y1="268" x2="465.0" y2="294.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="480" y1="268" x2="450.0" y2="268.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="480" y1="268" x2="465.0" y2="242.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><line x1="480" y1="268" x2="495.0" y2="242.0" stroke="#38bdf8" stroke-opacity=".55" stroke-width="2.5"/><circle cx="480" cy="268" r="11.9" fill="#141a32" stroke="#38bdf8" stroke-opacity=".7" stroke-width="2"/>
+</svg>

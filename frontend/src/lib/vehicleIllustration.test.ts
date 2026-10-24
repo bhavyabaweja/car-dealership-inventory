@@ -19,6 +19,7 @@ describe("illustrationFor", () => {
     ["Truck", "truck"],
     ["Pickup", "truck"],
     ["Pick-up truck", "truck"],
+    ["Pick-up", "truck"],
     ["Coupe", "coupe"],
     ["Sports", "coupe"],
     ["Convertible", "coupe"],
@@ -49,7 +50,7 @@ describe("illustrationFor", () => {
     },
   );
 
-  it("gives every kind its own image, each a real file the app serves", () => {
+  it("gives every kind its own image, each a local SVG (a file, or inlined by the build when small)", () => {
     const kinds: IllustrationKind[] = ["suv", "sedan", "hatchback", "truck", "coupe", "generic"];
 
     const sources = kinds.map((kind) => {
@@ -58,6 +59,7 @@ describe("illustrationFor", () => {
     });
 
     expect(new Set(sources).size).toBe(kinds.length);
-    for (const source of sources) expect(source).toMatch(/\.svg(\?|$)/);
+    for (const source of sources) expect(source).toMatch(/\.svg(\?|$)|^data:image\/svg\+xml/);
+    for (const source of sources) expect(source).not.toMatch(/^https?:/); // nothing fetched from another site
   });
 });
