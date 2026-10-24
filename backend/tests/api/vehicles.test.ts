@@ -183,13 +183,16 @@ describe("PUT /api/vehicles/:id", () => {
     expect(response.body).toEqual({ id: vehicleId, ...camry, price: "24999.99", category: "Hybrid" });
   });
 
-  it("leaves the stock alone even if a quantity is sent", async () => {
+  it("responds 400 when a quantity is sent, saying stock changes through restock, and changes nothing", async () => {
     const response = await request(ctx.app)
       .put(`/api/vehicles/${vehicleId}`)
       .set(bearer(adminToken))
       .send({ model: "Corolla", quantity: 999 });
 
-    expect(response.body.quantity).toBe(5);
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    expect(response.body.error.details).toEqual([{ field: "quantity", message: expect.stringMatching(/restock/i) }]);
+    expect(ctx.vehicles.vehicles[0]).toMatchObject({ model: "Camry", quantity: 5 });
   });
 
   it("responds 400 when there is nothing valid to change", async () => {

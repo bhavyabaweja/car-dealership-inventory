@@ -173,17 +173,23 @@ describe("VehicleService", () => {
       expect(updated).toEqual({ id, ...camry, price: "24999.99", category: "Hybrid" });
     });
 
-    it("cannot change the stock, even if the client sends a quantity", async () => {
+    it.each([
+      ["a quantity next to a real change", { model: "Corolla", quantity: 999 }],
+      ["only a quantity", { quantity: 3 }],
+      ["a quantity of zero", { make: "Ford", quantity: 0 }],
+      ["a null quantity", { make: "Ford", quantity: null }],
+    ])("refuses %s, pointing to restock, instead of ignoring it, and changes nothing", async (_label, input) => {
       const { id } = await stock({ quantity: 5 });
 
-      const updated = await service.update(id, { model: "Corolla", quantity: 999 });
+      const error = await service.update(id, input).catch((e) => e);
 
-      expect(updated).toMatchObject({ model: "Corolla", quantity: 5 });
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.details).toEqual([{ field: "quantity", message: expect.stringMatching(/restock/i) }]);
+      expect(repository.vehicles[0]).toMatchObject(camry);
     });
 
     it.each([
       ["nothing to change", {}],
-      ["only a quantity, which is not editable here", { quantity: 3 }],
       ["no input at all", undefined],
       ["a blank make", { make: "  " }],
       ["a price of zero", { price: "0" }],
