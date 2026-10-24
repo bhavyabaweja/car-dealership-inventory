@@ -18,6 +18,9 @@ function StockBadge({ quantity }: { quantity: number }) {
   return <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}>{text}</span>;
 }
 
+const adminButton = "px-2 sm:px-3";
+const adminIcon = "hidden size-4 min-[420px]:block";
+
 /** What an administrator can do to a vehicle. Passed only to administrators, so a customer's card never has them. */
 export interface AdminActions {
   onEdit: (vehicle: Vehicle) => void;
@@ -76,17 +79,19 @@ export function VehicleCard({ vehicle, onPurchase, purchasing, admin }: VehicleC
         </Button>
 
         {admin && (
+          // Three buttons share the row. On narrow phones there is no room for an icon beside "Restock" as well
+          // (it needs 78px of a 77px button at 320px), and the words say it all, so the icons wait for width.
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <Button variant="secondary" size="sm" aria-label={`Edit ${name}`} onClick={() => admin.onEdit(vehicle)}>
-              <Pencil className="size-4" aria-hidden="true" />
+            <Button variant="secondary" size="sm" className={adminButton} aria-label={`Edit ${name}`} onClick={() => admin.onEdit(vehicle)}>
+              <Pencil className={adminIcon} aria-hidden="true" />
               Edit
             </Button>
-            <Button variant="secondary" size="sm" aria-label={`Restock ${name}`} onClick={() => admin.onRestock(vehicle)}>
-              <PackagePlus className="size-4" aria-hidden="true" />
+            <Button variant="secondary" size="sm" className={adminButton} aria-label={`Restock ${name}`} onClick={() => admin.onRestock(vehicle)}>
+              <PackagePlus className={adminIcon} aria-hidden="true" />
               Restock
             </Button>
-            <Button variant="dangerOutline" size="sm" aria-label={`Delete ${name}`} onClick={() => admin.onDelete(vehicle)}>
-              <Trash2 className="size-4" aria-hidden="true" />
+            <Button variant="dangerOutline" size="sm" className={adminButton} aria-label={`Delete ${name}`} onClick={() => admin.onDelete(vehicle)}>
+              <Trash2 className={adminIcon} aria-hidden="true" />
               Delete
             </Button>
           </div>

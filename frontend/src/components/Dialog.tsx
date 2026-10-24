@@ -11,6 +11,7 @@ interface DialogProps {
  * A modal dialog on the browser's own <dialog> element, which traps focus, handles Escape and dims
  * the page for us. On a phone it rises from the bottom as a sheet; from tablet width it is centred.
  * Put `data-autofocus` on the element that should have the cursor first (a destructive dialog starts on Cancel).
+ * Put `data-focus-fallback` (and tabIndex={-1}) on the page's heading: focus goes there if what opened the dialog is gone.
  */
 export function Dialog({ title, onClose, children }: DialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -26,7 +27,10 @@ export function Dialog({ title, onClose, children }: DialogProps) {
 
     return () => {
       element.close();
-      opener?.focus(); // back to what opened it, so a keyboard user keeps their place
+      // Back to what opened it, so a keyboard user keeps their place. If that is gone (the item the dialog
+      // was about was deleted), to the page's own marked spot, rather than letting focus fall to the top.
+      const target = opener?.isConnected ? opener : document.querySelector<HTMLElement>("[data-focus-fallback]");
+      target?.focus();
     };
   }, []);
 

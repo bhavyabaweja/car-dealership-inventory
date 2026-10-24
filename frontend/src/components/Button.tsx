@@ -11,8 +11,9 @@ interface ButtonProps extends ComponentProps<"button"> {
   loading?: boolean;
 }
 
+// Icons never shrink: in a narrow button (three side by side at 320px) they would otherwise be squeezed to dots.
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors " +
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors [&>svg]:shrink-0 " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 

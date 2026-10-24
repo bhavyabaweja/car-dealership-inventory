@@ -5,9 +5,11 @@ import { Alert } from "../components/Alert";
 import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "../components/Button";
 import { TextField } from "../components/TextField";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { messageFor } from "../lib/errors";
 
 export function LoginPage() {
+  useDocumentTitle("Sign in");
   const { login, sessionExpired } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

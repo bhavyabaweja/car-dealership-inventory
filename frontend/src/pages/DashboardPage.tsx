@@ -14,6 +14,7 @@ import { useToast } from "../components/Toasts";
 import { VehicleCard, VehicleCardSkeleton } from "../components/VehicleCard";
 import { VehicleFormDialog } from "../components/VehicleFormDialog";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useVehicles } from "../hooks/useVehicles";
 import { messageFor } from "../lib/errors";
 import { countActive, emptyFilters, type FilterInputs, filtersFromParams, paramsFromFilters, toFilters } from "../lib/filters";
@@ -36,6 +37,7 @@ type Panel =
 const nameOf = (vehicle: Vehicle) => `${vehicle.make} ${vehicle.model}`;
 
 export function DashboardPage() {
+  useDocumentTitle("Vehicles");
   const api = useVehiclesApi();
   const toast = useToast();
   const { isAdmin } = useAuth();
@@ -49,7 +51,7 @@ export function DashboardPage() {
   const [inputs, setInputs] = useState<FilterInputs>(() => filtersFromParams(params));
   const settled = useDebouncedValue(inputs, SEARCH_PAUSE_MS);
   const { filters, errors } = useMemo(() => toFilters(settled), [settled]);
-  const { status, vehicles, error, isFetching, reload, replace } = useVehicles(filters);
+  const { status, vehicles, error, isFetching, reload, replace, remove } = useVehicles(filters);
 
   useEffect(() => {
     const next = paramsFromFilters(settled);
@@ -92,9 +94,13 @@ export function DashboardPage() {
     setDeleteError(undefined);
   }
 
-  /** The vehicle was removed while a dialog about it was open: say so and show what is really there. */
+  /**
+   * The vehicle was removed while a dialog about it was open: say so and show what is really there.
+   * It leaves the screen together with the dialog, so focus can move on to the page heading in the same step.
+   */
   function vehicleGone(vehicle: Vehicle) {
     closePanel();
+    remove(vehicle.id);
     toast.error(`${nameOf(vehicle)}: Vehicle not found`);
     reload();
   }
@@ -104,13 +110,15 @@ export function DashboardPage() {
     setDeleteError(undefined);
     try {
       await api.remove(vehicle.id);
+      // The server has confirmed, so the list needs no second trip to know the vehicle is gone.
       closePanel();
+      remove(vehicle.id);
       toast.success(`Deleted ${nameOf(vehicle)}.`);
-      reload();
     } catch (failure) {
       if (failure instanceof ApiError && failure.code === "VEHICLE_NOT_FOUND") {
         // Someone else already deleted it, which is what was wanted anyway.
         closePanel();
+        remove(vehicle.id);
         toast.success(`${nameOf(vehicle)} was already removed.`);
         reload();
       } else {
@@ -134,7 +142,10 @@ export function DashboardPage() {
       <AppHeader />
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-[max(4rem,env(safe-area-inset-bottom))] sm:pt-8">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Vehicles</h1>
+          {/* Where focus lands when a dialog's own opener is gone (see Dialog). */}
+          <h1 tabIndex={-1} data-focus-fallback className="text-2xl font-semibold tracking-tight text-slate-900 focus:outline-none">
+            Vehicles
+          </h1>
           {isAdmin && (
             <Button onClick={() => setPanel({ kind: "add" })}>
               <Plus className="size-4" aria-hidden="true" />

@@ -6,6 +6,7 @@ import { Alert } from "../components/Alert";
 import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "../components/Button";
 import { TextField } from "../components/TextField";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { messageFor } from "../lib/errors";
 import { validateEmail, validatePassword } from "../lib/validation";
 
@@ -13,6 +14,7 @@ type Field = "email" | "password";
 type FieldErrors = Partial<Record<Field, string>>;
 
 export function RegisterPage() {
+  useDocumentTitle("Create an account");
   const { register } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

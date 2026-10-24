@@ -69,8 +69,13 @@ export function useVehicles(filters: VehicleFilters) {
     }));
   }, []);
 
+  /** Takes a vehicle off the list, such as once the server has confirmed it was deleted. */
+  const remove = useCallback((id: string) => {
+    setLoaded((current) => ({ ...current, vehicles: current.vehicles.filter((existing) => existing.id !== id) }));
+  }, []);
+
   return useMemo(
-    () => ({ ...loaded, isFetching, reload, replace }),
-    [loaded, isFetching, reload, replace],
+    () => ({ ...loaded, isFetching, reload, replace, remove }),
+    [loaded, isFetching, reload, replace, remove],
   );
 }
