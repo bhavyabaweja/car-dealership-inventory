@@ -290,6 +290,7 @@ describe("editing a vehicle", () => {
     expect(await screen.findByText("Toyota Camry: Vehicle not found")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("article", { name: "Toyota Camry" })).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { level: 1, name: "Vehicles" })).toHaveFocus(); // the Edit button is gone
   });
 
   it("returns the cursor to the Edit button it came from", async () => {
@@ -411,6 +412,27 @@ describe("deleting a vehicle", () => {
     expect(await screen.findByText("Deleted Toyota Camry.")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("article", { name: "Toyota Camry" })).not.toBeInTheDocument());
     expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("takes the vehicle off the screen as soon as the server confirms, without asking for the list again", async () => {
+    const { api } = openDashboard(); // were the list fetched again, this fake would bring the vehicle back
+    await openDeleteDialog();
+
+    await user().click(dialog().getByRole("button", { name: "Delete vehicle" }));
+
+    await waitFor(() => expect(screen.queryByRole("article", { name: "Toyota Camry" })).not.toBeInTheDocument());
+    expect(api.find).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("puts the cursor on the page heading afterwards, since the Delete button it came from is gone", async () => {
+    openDashboard();
+    await openDeleteDialog();
+
+    await user().click(dialog().getByRole("button", { name: "Delete vehicle" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { level: 1, name: "Vehicles" })).toHaveFocus();
   });
 
   it("leaves the vehicle alone on Cancel or Escape", async () => {

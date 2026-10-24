@@ -118,6 +118,56 @@ describe("Dialog", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(opener).toHaveFocus();
     });
+
+    describe("when what opened it is gone by the time it closes, as after deleting the item it was about", () => {
+      function Vanishing({ withFallback }: { withFallback: boolean }) {
+        const [open, setOpen] = useState(false);
+        const [deleted, setDeleted] = useState(false);
+        return (
+          <>
+            {withFallback && (
+              <h1 tabIndex={-1} data-focus-fallback>
+                Vehicles
+              </h1>
+            )}
+            {!deleted && <button onClick={() => setOpen(true)}>Delete Camry</button>}
+            {open && (
+              <Dialog title="Delete Camry?" onClose={() => {}}>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    setDeleted(true);
+                  }}
+                >
+                  Confirm
+                </button>
+              </Dialog>
+            )}
+          </>
+        );
+      }
+
+      it("moves focus to the element marked as the fallback, so the keyboard user keeps their place", async () => {
+        const user = userEvent.setup();
+        render(<Vanishing withFallback />);
+
+        await user.click(screen.getByRole("button", { name: "Delete Camry" }));
+        await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+        expect(screen.queryByRole("button", { name: "Delete Camry" })).not.toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Vehicles" })).toHaveFocus();
+      });
+
+      it("copes when the page marks no fallback", async () => {
+        const user = userEvent.setup();
+        render(<Vanishing withFallback={false} />);
+
+        await user.click(screen.getByRole("button", { name: "Delete Camry" }));
+        await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+    });
   });
 
   it("closes the native dialog when it goes away, releasing the page behind it", () => {
