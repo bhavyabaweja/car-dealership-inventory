@@ -63,7 +63,7 @@ export function AppHeader({ hasCategories }: AppHeaderProps) {
           <div className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/8 bg-surface-container py-1.5 pr-3 pl-1.5">
             <span
               aria-hidden="true"
-              className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-container to-secondary-container text-xs font-bold text-on-primary-container"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-container to-secondary text-xs font-bold text-on-primary-container"
             >
               {initials}
             </span>

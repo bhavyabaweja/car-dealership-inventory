@@ -150,7 +150,9 @@ describe("buying a vehicle", () => {
     openDashboard();
 
     expect((await cardOf("Toyota Camry")).getByRole("button", { name: "Purchase Toyota Camry" })).toBeEnabled();
-    expect((await cardOf("Honda Civic")).getByRole("button", { name: "Purchase Honda Civic" })).toBeDisabled();
+    const soldOut = (await cardOf("Honda Civic")).getByRole("button", { name: "Purchase Honda Civic, out of stock" });
+    expect(soldOut).toBeDisabled();
+    expect(soldOut).toHaveTextContent("Out of stock"); // the visible words say so, and the name contains them
   });
 
   it("takes one unit and shows the new stock the server reports, with a confirmation", async () => {
@@ -185,7 +187,7 @@ describe("buying a vehicle", () => {
     const camry = await buy("Toyota Camry");
 
     expect(await camry.findByText("Sold out")).toBeInTheDocument();
-    expect(camry.getByRole("button", { name: "Purchase Toyota Camry" })).toBeDisabled();
+    expect(camry.getByRole("button", { name: /^Purchase Toyota Camry/ })).toBeDisabled();
   });
 
   it("shows that it is working on that vehicle only, and cannot be sent twice", async () => {

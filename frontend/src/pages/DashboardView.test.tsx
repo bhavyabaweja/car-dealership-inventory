@@ -16,7 +16,7 @@ const openDashboard = (api = fakeVehiclesApi(), role: "USER" | "ADMIN" = "USER")
 const shown = () => screen.getAllByRole("article").map((card) => within(card).getByRole("heading").textContent);
 const categories = () => screen.getByRole("group", { name: "Filter by category" });
 const tab = (name: string | RegExp) => within(categories()).getByRole("button", { name });
-const stockSwitch = () => screen.getByRole("switch", { name: "In stock only" });
+const stockSwitch = () => screen.getByRole("switch", { name: "In-stock only" });
 const chooseSort = (label: string) => user().selectOptions(screen.getByRole("combobox", { name: "Sort by" }), label);
 
 describe("category tabs", () => {

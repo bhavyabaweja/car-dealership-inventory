@@ -93,7 +93,7 @@ export function SiteFooter({ hasCategories, categories, onChooseCategory }: Site
           </div>
         </div>
 
-        <p className="border-t border-white/8 pt-8 text-xs text-slate-500">&copy; {new Date().getFullYear()} AutoVault. All rights reserved.</p>
+        <p className="border-t border-white/8 pt-8 text-xs text-outline">&copy; {new Date().getFullYear()} AutoVault. All rights reserved.</p>
       </div>
     </footer>
   );

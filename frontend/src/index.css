@@ -62,6 +62,35 @@
   }
 }
 
+/* In-page links glide to their section, unless the person asks for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* The loading placeholders shimmer; people who ask for less motion get still blocks. */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #111d30 25%, #192843 50%, #111d30 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+  }
+}
+
 /* A notification slides up a little as it appears; people who ask for less motion get none. */
 @keyframes toast-in {
   from {
