@@ -55,9 +55,18 @@ export const createVehicleSchema = z.object({
   quantity: wholeNumber.min(0, "Cannot be negative").max(MAX_QUANTITY, `Must be at most ${MAX_QUANTITY}`).default(0),
 });
 
-/** Stock is not editable here: it changes only through purchase and restock, which are atomic. */
+/**
+ * Stock is not editable here: it changes only through purchase and restock, which are atomic.
+ * A quantity is refused, not ignored, so a client never believes an edit that was half thrown away.
+ */
 export const updateVehicleSchema = z
-  .object({ make: text.optional(), model: text.optional(), category: text.optional(), price: price.optional() })
+  .object({
+    make: text.optional(),
+    model: text.optional(),
+    category: text.optional(),
+    price: price.optional(),
+    quantity: z.never({ error: "Stock cannot be edited here; use POST /api/vehicles/:id/restock to add units" }).optional(),
+  })
   .refine((changes) => Object.keys(changes).length > 0, {
     message: "Provide at least one of make, model, category or price",
   });
