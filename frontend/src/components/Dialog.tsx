@@ -51,10 +51,10 @@ export function Dialog({ title, onClose, children }: DialogProps) {
         if (event.target === event.currentTarget && pressStartedOnBackdrop.current) onClose();
         pressStartedOnBackdrop.current = false;
       }}
-      className="m-auto w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-900/50 max-sm:m-0 max-sm:mt-auto max-sm:max-h-[92dvh] max-sm:max-w-none max-sm:rounded-b-none"
+      className="m-auto w-full max-w-lg overflow-y-auto rounded-2xl bg-surface-container p-0 text-on-surface shadow-2xl ring-1 ring-white/12 backdrop:bg-surface-container-lowest/80 backdrop:backdrop-blur-sm max-sm:m-0 max-sm:mt-auto max-sm:max-h-[92dvh] max-sm:max-w-none max-sm:rounded-b-none"
     >
       <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-6">
-        <h2 id={titleId} className="text-lg font-semibold tracking-tight">
+        <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
           {title}
         </h2>
         {children}

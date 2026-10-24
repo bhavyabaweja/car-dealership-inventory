@@ -16,7 +16,7 @@ export function TextField({ label, hint, error, id, className = "", ...props }: 
 
   return (
     <div>
-      <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={inputId} className="block text-sm font-medium text-on-surface-variant">
         {label}
       </label>
       <input
@@ -24,19 +24,20 @@ export function TextField({ label, hint, error, id, className = "", ...props }: 
         aria-invalid={error ? true : undefined}
         aria-describedby={error || showHint ? messageId : undefined}
         className={
-          "mt-1.5 block h-11 w-full rounded-lg border bg-white px-3 text-slate-900 shadow-sm placeholder:text-slate-400 " +
-          "focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-600 disabled:bg-slate-50 " +
-          `${error ? "border-red-400" : "border-slate-300"} ${className}`
+          "mt-1.5 block h-11 w-full rounded-lg bg-surface-container-lowest/70 px-3 text-on-surface placeholder:text-outline " +
+          "ring-1 ring-inset transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-container " +
+          "disabled:opacity-60 " +
+          `${error ? "ring-red-400/70" : "ring-white/12"} ${className}`
         }
         {...props}
       />
       {error ? (
-        <p id={messageId} className="mt-1.5 text-sm text-red-700">
+        <p id={messageId} className="mt-1.5 text-sm text-error">
           {error}
         </p>
       ) : (
         showHint && (
-          <p id={messageId} className="mt-1.5 text-sm text-slate-500">
+          <p id={messageId} className="mt-1.5 text-sm text-outline">
             {hint}
           </p>
         )

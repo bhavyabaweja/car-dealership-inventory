@@ -1,13 +1,47 @@
 @import "tailwindcss";
 
+/*
+ * The "Midnight Velocity" design system from the Stitch design (AutoVault): a dark, cyan-and-blue palette
+ * on deep navy, Outfit for headings and numbers, Inter for everything else. Token names follow the design,
+ * so a class such as bg-surface-container or text-on-surface-variant reads the same as in the mock-up.
+ */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #0b1229;
+  --color-surface: #0b1229;
+  --color-surface-bright: #323851;
+  --color-surface-container-lowest: #060d24;
+  --color-surface-container-low: #141a32;
+  --color-surface-container: #181e36;
+  --color-surface-container-high: #222941;
+  --color-surface-container-highest: #2d344c;
+  --color-on-surface: #dce1ff;
+  --color-on-surface-variant: #bdc8d1;
+  --color-outline: #87929a;
+  --color-outline-variant: #3e484f;
+
+  --color-primary: #8ed5ff;
+  --color-on-primary: #00354a;
+  --color-primary-container: #38bdf8;
+  --color-on-primary-container: #004965;
+  --color-secondary: #b4c5ff;
+  --color-secondary-container: #0053db;
+  --color-on-secondary-container: #cdd7ff;
+  --color-tertiary: #a1d2ff;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  --shadow-glow: 0 12px 32px -4px rgb(56 189 248 / 0.15);
 }
 
 @layer base {
   body {
     min-height: 100dvh;
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-background text-on-surface antialiased;
   }
 
   /* Below 16px, iOS Safari zooms the page when a field gets focus. */
@@ -15,6 +49,15 @@
   select,
   textarea {
     font-size: max(16px, 1em);
+  }
+
+  /* Dark form controls draw their own scrollbars, pickers and arrows in dark too. */
+  :root {
+    color-scheme: dark;
+  }
+
+  ::selection {
+    @apply bg-primary-container text-on-primary-container;
   }
 }
 
@@ -35,6 +78,7 @@
     animation: none;
   }
 }
+
 /* While a dialog is open the page behind it should not scroll. */
 body:has(dialog[open]) {
   overflow: hidden;

@@ -74,15 +74,15 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   return (
     <div
       role={isError ? "alert" : undefined}
-      className="toast-in pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl bg-slate-900 p-3.5 text-sm text-white shadow-lg ring-1 ring-black/10"
+      className="toast-in pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl bg-surface-container-highest p-3.5 text-sm text-on-surface shadow-2xl ring-1 ring-white/10"
     >
-      <Icon className={`mt-0.5 size-4 shrink-0 ${isError ? "text-red-300" : "text-emerald-300"}`} aria-hidden="true" />
+      <Icon className={`mt-0.5 size-4 shrink-0 ${isError ? "text-red-300" : "text-emerald-400"}`} aria-hidden="true" />
       <p className="min-w-0 flex-1">{toast.message}</p>
       <button
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss notification"
-        className="-m-2 grid size-9 shrink-0 place-items-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white"
+        className="-m-2 grid size-9 shrink-0 place-items-center rounded-lg text-on-surface-variant hover:bg-white/10 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-primary-container"
       >
         <X className="size-4" aria-hidden="true" />
       </button>

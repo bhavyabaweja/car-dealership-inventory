@@ -9,20 +9,20 @@ describe("page titles", () => {
   it("names the sign-in page", () => {
     renderApp("/login");
 
-    expect(document.title).toBe("Sign in | Car Dealership");
+    expect(document.title).toBe("Sign in | AutoVault");
   });
 
   it("names the registration page", () => {
     renderApp("/register");
 
-    expect(document.title).toBe("Create an account | Car Dealership");
+    expect(document.title).toBe("Create an account | AutoVault");
   });
 
   it("names the dashboard", async () => {
     renderApp("/", { stored: storedSession("USER") });
     await screen.findAllByRole("article");
 
-    expect(document.title).toBe("Vehicles | Car Dealership");
+    expect(document.title).toBe("Vehicles | AutoVault");
   });
 
   it("follows the person from page to page", async () => {
@@ -31,6 +31,6 @@ describe("page titles", () => {
     await userEvent.setup().click(screen.getByRole("link", { name: "Create an account" }));
 
     expect(await screen.findByRole("heading", { name: /create/i })).toBeInTheDocument();
-    expect(document.title).toBe("Create an account | Car Dealership");
+    expect(document.title).toBe("Create an account | AutoVault");
   });
 });

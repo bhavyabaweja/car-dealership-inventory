@@ -13,19 +13,25 @@ interface ButtonProps extends ComponentProps<"button"> {
 
 // Icons never shrink: in a narrow button (three side by side at 320px) they would otherwise be squeezed to dots.
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors [&>svg]:shrink-0 " +
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 " +
-  "disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-all [&>svg]:shrink-0 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container " +
+  "disabled:cursor-not-allowed disabled:opacity-50";
 
 // Small buttons are still 44px tall on touch screens, the smallest comfortable tap target.
 const sizes: Record<Size, string> = { md: "h-11 px-4 text-sm", sm: "h-11 px-3 text-sm sm:h-9" };
 
 const variants: Record<Variant, string> = {
-  primary: "bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 disabled:hover:bg-indigo-600",
-  secondary: "bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:hover:bg-white",
-  danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 disabled:hover:bg-red-600",
-  dangerOutline: "bg-white text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-50 disabled:hover:bg-white",
-  ghost: "text-indigo-700 hover:bg-indigo-50 disabled:hover:bg-transparent",
+  primary:
+    "bg-gradient-to-r from-secondary-container to-primary-container text-white shadow-md hover:brightness-110 " +
+    "active:scale-[0.98] disabled:hover:brightness-100 disabled:active:scale-100",
+  secondary:
+    "bg-surface-container-low text-on-surface ring-1 ring-inset ring-white/10 hover:text-primary-container " +
+    "hover:ring-primary-container/50 disabled:hover:text-on-surface disabled:hover:ring-white/10",
+  danger: "bg-red-600 text-white shadow-md hover:bg-red-500 disabled:hover:bg-red-600",
+  dangerOutline:
+    "bg-surface-container-low text-red-300 ring-1 ring-inset ring-red-400/30 hover:bg-red-950/50 " +
+    "disabled:hover:bg-surface-container-low",
+  ghost: "text-primary-container hover:bg-primary-container/10 disabled:hover:bg-transparent",
 };
 
 export function Button({
@@ -46,7 +52,7 @@ export function Button({
       className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}
     >
-      {loading && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
+      {loading && <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
       {children}
     </button>
   );

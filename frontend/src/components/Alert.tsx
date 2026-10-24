@@ -13,7 +13,9 @@ export function Alert({ variant = "error", children }: { variant?: "error" | "no
       role={isError ? "alert" : "status"}
       className={
         "flex items-start gap-2.5 rounded-lg border p-3 text-sm " +
-        (isError ? "border-red-200 bg-red-50 text-red-800" : "border-indigo-200 bg-indigo-50 text-indigo-900")
+        (isError
+          ? "border-red-400/30 bg-red-950/50 text-on-error-container"
+          : "border-primary-container/30 bg-primary-container/10 text-primary")
       }
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />

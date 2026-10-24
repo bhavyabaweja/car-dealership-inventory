@@ -20,7 +20,7 @@ export function ConfirmDialog({ title, message, confirmLabel, busyLabel, busy, e
   return (
     <Dialog title={title} onClose={busy ? () => undefined : onCancel}>
       <div className="mt-3 space-y-4">
-        <p className="text-sm text-slate-600">{message}</p>
+        <p className="text-sm text-on-surface-variant">{message}</p>
         {error && <Alert>{error}</Alert>}
 
         <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">

@@ -50,7 +50,7 @@ export function RestockDialog({ vehicle, onClose, onRestocked, onGone }: Restock
   return (
     <Dialog title={`Restock ${vehicle.make} ${vehicle.model}`} onClose={busy ? () => undefined : onClose}>
       <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
-        <p className="text-sm text-slate-600">Currently {vehicle.quantity} in stock.</p>
+        <p className="text-sm text-on-surface-variant">Currently {vehicle.quantity} in stock.</p>
         {formError && <Alert>{formError}</Alert>}
 
         <TextField
