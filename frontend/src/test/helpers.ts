@@ -78,7 +78,7 @@ export function fakeVehiclesApi() {
     find: vi.fn(async (_filters: unknown, _signal?: AbortSignal) => sampleVehicles()),
     create: vi.fn(async (data: Omit<Vehicle, "id">) => ({ id: "v-new", ...data })),
     update: vi.fn(async (id: string, changes: Partial<Vehicle>) => ({ ...vehicle(), id, ...changes })),
-    remove: vi.fn(async (_id: string) => undefined),
+    remove: vi.fn(async (_id: string): Promise<void> => undefined),
     purchase: vi.fn(async (id: string, _quantity?: number) => vehicle({ id, quantity: 4 })),
     restock: vi.fn(async (id: string, quantity: number) => vehicle({ id, quantity })),
   } satisfies Record<keyof VehiclesApi, unknown>;

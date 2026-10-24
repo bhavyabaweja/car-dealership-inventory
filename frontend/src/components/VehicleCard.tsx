@@ -1,4 +1,4 @@
-import { ShoppingCart } from "lucide-react";
+import { PackagePlus, Pencil, ShoppingCart, Trash2 } from "lucide-react";
 import { useId } from "react";
 import type { Vehicle } from "../api/types";
 import { formatPrice } from "../lib/money";
@@ -18,14 +18,22 @@ function StockBadge({ quantity }: { quantity: number }) {
   return <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}>{text}</span>;
 }
 
+/** What an administrator can do to a vehicle. Passed only to administrators, so a customer's card never has them. */
+export interface AdminActions {
+  onEdit: (vehicle: Vehicle) => void;
+  onRestock: (vehicle: Vehicle) => void;
+  onDelete: (vehicle: Vehicle) => void;
+}
+
 interface VehicleCardProps {
   vehicle: Vehicle;
   onPurchase: (vehicle: Vehicle) => void;
   /** A purchase of this vehicle is in progress. */
   purchasing: boolean;
+  admin?: AdminActions;
 }
 
-export function VehicleCard({ vehicle, onPurchase, purchasing }: VehicleCardProps) {
+export function VehicleCard({ vehicle, onPurchase, purchasing, admin }: VehicleCardProps) {
   const titleId = useId();
   const name = `${vehicle.make} ${vehicle.model}`;
 
@@ -66,6 +74,23 @@ export function VehicleCard({ vehicle, onPurchase, purchasing }: VehicleCardProp
             </>
           )}
         </Button>
+
+        {admin && (
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <Button variant="secondary" size="sm" aria-label={`Edit ${name}`} onClick={() => admin.onEdit(vehicle)}>
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit
+            </Button>
+            <Button variant="secondary" size="sm" aria-label={`Restock ${name}`} onClick={() => admin.onRestock(vehicle)}>
+              <PackagePlus className="size-4" aria-hidden="true" />
+              Restock
+            </Button>
+            <Button variant="dangerOutline" size="sm" aria-label={`Delete ${name}`} onClick={() => admin.onDelete(vehicle)}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
     </article>
   );

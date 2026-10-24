@@ -355,6 +355,21 @@ describe("restocking a vehicle", () => {
     expect(api.restock).not.toHaveBeenCalled();
   });
 
+  it("says so, closes and refreshes if the vehicle was removed in the meantime", async () => {
+    const api = fakeVehiclesApi();
+    api.find.mockResolvedValueOnce(sampleVehicles()).mockResolvedValueOnce(sampleVehicles().slice(1));
+    api.restock.mockRejectedValue(new ApiError(404, "VEHICLE_NOT_FOUND", "Vehicle not found"));
+    openDashboard("ADMIN", api);
+    await openRestockDialog();
+
+    await fill({ "Units to add": "5" });
+    await user().click(dialog().getByRole("button", { name: "Add stock" }));
+
+    expect(await screen.findByText("Toyota Camry: Vehicle not found")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("article", { name: "Toyota Camry" })).not.toBeInTheDocument());
+  });
+
   it("explains a failure above the form and stays open", async () => {
     const { api } = openDashboard();
     api.restock.mockRejectedValue(network());
@@ -421,6 +436,8 @@ describe("deleting a vehicle", () => {
     const busy = await dialog().findByRole("button", { name: "Deleting…" });
     expect(busy).toBeDisabled();
     expect(api.remove).toHaveBeenCalledTimes(1);
+    pressEscape();
+    expect(screen.getByRole("dialog")).toBeInTheDocument(); // the outcome is not hidden from the person who asked
 
     finish();
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());

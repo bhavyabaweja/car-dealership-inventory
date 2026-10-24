@@ -1,13 +1,18 @@
+import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useVehiclesApi } from "../api/ApiProvider";
 import { ApiError } from "../api/client";
 import type { Vehicle } from "../api/types";
+import { useAuth } from "../auth/AuthProvider";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { RestockDialog } from "../components/RestockDialog";
 import { SearchFilters } from "../components/SearchFilters";
 import { useToast } from "../components/Toasts";
 import { VehicleCard, VehicleCardSkeleton } from "../components/VehicleCard";
+import { VehicleFormDialog } from "../components/VehicleFormDialog";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useVehicles } from "../hooks/useVehicles";
 import { messageFor } from "../lib/errors";
@@ -21,11 +26,24 @@ const SEARCH_PAUSE_MS = 300;
 
 const grid = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
+/** The dialog that is open, if any, with the vehicle it is about. */
+type Panel =
+  | { kind: "add" }
+  | { kind: "edit"; vehicle: Vehicle }
+  | { kind: "restock"; vehicle: Vehicle }
+  | { kind: "delete"; vehicle: Vehicle };
+
+const nameOf = (vehicle: Vehicle) => `${vehicle.make} ${vehicle.model}`;
+
 export function DashboardPage() {
   const api = useVehiclesApi();
   const toast = useToast();
+  const { isAdmin } = useAuth();
   const [params, setParams] = useSearchParams();
   const [purchasing, setPurchasing] = useState<ReadonlySet<string>>(new Set());
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
 
   // What is typed, as typed. The search follows it once typing pauses, and the address bar follows the search.
   const [inputs, setInputs] = useState<FilterInputs>(() => filtersFromParams(params));
@@ -69,11 +87,61 @@ export function DashboardPage() {
     }
   }
 
+  function closePanel() {
+    setPanel(null);
+    setDeleteError(undefined);
+  }
+
+  /** The vehicle was removed while a dialog about it was open: say so and show what is really there. */
+  function vehicleGone(vehicle: Vehicle) {
+    closePanel();
+    toast.error(`${nameOf(vehicle)}: Vehicle not found`);
+    reload();
+  }
+
+  async function confirmDelete(vehicle: Vehicle) {
+    setDeleting(true);
+    setDeleteError(undefined);
+    try {
+      await api.remove(vehicle.id);
+      closePanel();
+      toast.success(`Deleted ${nameOf(vehicle)}.`);
+      reload();
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.code === "VEHICLE_NOT_FOUND") {
+        // Someone else already deleted it, which is what was wanted anyway.
+        closePanel();
+        toast.success(`${nameOf(vehicle)} was already removed.`);
+        reload();
+      } else {
+        setDeleteError(messageFor(failure));
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const adminActions = isAdmin
+    ? {
+        onEdit: (vehicle: Vehicle) => setPanel({ kind: "edit", vehicle }),
+        onRestock: (vehicle: Vehicle) => setPanel({ kind: "restock", vehicle }),
+        onDelete: (vehicle: Vehicle) => setPanel({ kind: "delete", vehicle }),
+      }
+    : undefined;
+
   return (
     <>
       <AppHeader />
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-[max(4rem,env(safe-area-inset-bottom))] sm:pt-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Vehicles</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Vehicles</h1>
+          {isAdmin && (
+            <Button onClick={() => setPanel({ kind: "add" })}>
+              <Plus className="size-4" aria-hidden="true" />
+              Add vehicle
+            </Button>
+          )}
+        </div>
 
         <div className="mt-4">
           <SearchFilters
@@ -134,13 +202,62 @@ export function DashboardPage() {
             <ul className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
               {vehicles.map((vehicle) => (
                 <li key={vehicle.id}>
-                  <VehicleCard vehicle={vehicle} onPurchase={purchase} purchasing={purchasing.has(vehicle.id)} />
+                  <VehicleCard vehicle={vehicle} onPurchase={purchase} purchasing={purchasing.has(vehicle.id)} admin={adminActions} />
                 </li>
               ))}
             </ul>
           )}
         </div>
       </main>
+
+      {/* Each dialog exists only while open, so it always starts fresh. */}
+      {panel?.kind === "add" && (
+        <VehicleFormDialog
+          onClose={closePanel}
+          onGone={closePanel}
+          onSaved={(added) => {
+            closePanel();
+            toast.success(`Added ${nameOf(added)}.`);
+            reload(); // a new vehicle belongs somewhere in the order the server decides
+          }}
+        />
+      )}
+      {panel?.kind === "edit" && (
+        <VehicleFormDialog
+          vehicle={panel.vehicle}
+          onClose={closePanel}
+          onGone={() => vehicleGone(panel.vehicle)}
+          onSaved={(saved) => {
+            replace(saved);
+            closePanel();
+            toast.success(`Updated ${nameOf(saved)}.`);
+          }}
+        />
+      )}
+      {panel?.kind === "restock" && (
+        <RestockDialog
+          vehicle={panel.vehicle}
+          onClose={closePanel}
+          onGone={() => vehicleGone(panel.vehicle)}
+          onRestocked={(restocked) => {
+            replace(restocked);
+            closePanel();
+            toast.success(`Restocked ${nameOf(restocked)}: ${restocked.quantity} in stock.`);
+          }}
+        />
+      )}
+      {panel?.kind === "delete" && (
+        <ConfirmDialog
+          title={`Delete ${nameOf(panel.vehicle)}?`}
+          message="This removes it from the inventory for everyone. This can't be undone."
+          confirmLabel="Delete vehicle"
+          busyLabel="Deleting…"
+          busy={deleting}
+          error={deleteError}
+          onConfirm={() => confirmDelete(panel.vehicle)}
+          onCancel={closePanel}
+        />
+      )}
     </>
   );
 }
