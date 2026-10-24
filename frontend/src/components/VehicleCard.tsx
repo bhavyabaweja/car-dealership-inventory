@@ -30,7 +30,8 @@ export interface AdminActions {
 
 interface VehicleCardProps {
   vehicle: Vehicle;
-  onPurchase: (vehicle: Vehicle) => void;
+  /** Without it the card offers no Purchase button, as on an administrator's dashboard. */
+  onPurchase?: (vehicle: Vehicle) => void;
   /** A purchase of this vehicle is in progress. */
   purchasing: boolean;
   admin?: AdminActions;
@@ -60,28 +61,30 @@ export function VehicleCard({ vehicle, onPurchase, purchasing, admin }: VehicleC
       <p className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">{formatPrice(vehicle.price)}</p>
 
       {/* mt-auto keeps the buttons in a row across cards whatever the title length. */}
-      <div className="mt-auto pt-5">
-        <Button
-          className="w-full"
-          disabled={vehicle.quantity === 0}
-          loading={purchasing}
-          aria-label={`Purchase ${name}`}
-          onClick={() => onPurchase(vehicle)}
-        >
-          {purchasing ? (
-            "Buying…"
-          ) : (
-            <>
-              <ShoppingCart className="size-4" aria-hidden="true" />
-              Purchase
-            </>
-          )}
-        </Button>
+      <div className="mt-auto space-y-2 pt-5">
+        {onPurchase && (
+          <Button
+            className="w-full"
+            disabled={vehicle.quantity === 0}
+            loading={purchasing}
+            aria-label={`Purchase ${name}`}
+            onClick={() => onPurchase(vehicle)}
+          >
+            {purchasing ? (
+              "Buying…"
+            ) : (
+              <>
+                <ShoppingCart className="size-4" aria-hidden="true" />
+                Purchase
+              </>
+            )}
+          </Button>
+        )}
 
         {admin && (
           // Three buttons share the row. On narrow phones there is no room for an icon beside "Restock" as well
           // (it needs 78px of a 77px button at 320px), and the words say it all, so the icons wait for width.
-          <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button variant="secondary" size="sm" className={adminButton} aria-label={`Edit ${name}`} onClick={() => admin.onEdit(vehicle)}>
               <Pencil className={adminIcon} aria-hidden="true" />
               Edit

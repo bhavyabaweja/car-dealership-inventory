@@ -22,6 +22,20 @@ describe("VehicleCard", () => {
       expect(screen.getByRole("button", { name: /^Purchase / })).toBeEnabled();
     });
 
+    it("follows what it is given, not who is looking: with both ways in hand the card shows both", () => {
+      render(
+        <VehicleCard
+          vehicle={vehicle()}
+          onPurchase={() => {}}
+          purchasing={false}
+          admin={{ onEdit: () => {}, onRestock: () => {}, onDelete: () => {} }}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: /^Purchase / })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Edit / })).toBeInTheDocument();
+    });
+
     it("is left out when the card is given no way to purchase, as for an administrator", () => {
       render(
         <VehicleCard

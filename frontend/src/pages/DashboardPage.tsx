@@ -213,7 +213,13 @@ export function DashboardPage() {
             <ul className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
               {vehicles.map((vehicle) => (
                 <li key={vehicle.id}>
-                  <VehicleCard vehicle={vehicle} onPurchase={purchase} purchasing={purchasing.has(vehicle.id)} admin={adminActions} />
+                  {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
+                  <VehicleCard
+                    vehicle={vehicle}
+                    onPurchase={isAdmin ? undefined : purchase}
+                    purchasing={purchasing.has(vehicle.id)}
+                    admin={adminActions}
+                  />
                 </li>
               ))}
             </ul>
