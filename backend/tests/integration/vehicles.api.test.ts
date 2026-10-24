@@ -82,6 +82,32 @@ describe("vehicle API with the real database", () => {
     expect(rows).toEqual([{ price: "19999.99", quantity: 3 }]);
   });
 
+  it("answers a restock past the stock limit with 409, not a server error, and keeps the stock", async () => {
+    const admin = await signInAs("ADMIN");
+    const { id } = await addCamry(admin);
+    await prisma.$executeRaw`UPDATE "Vehicle" SET quantity = 999990 WHERE id = ${id}`;
+
+    const over = await request(app).post(`/api/vehicles/${id}/restock`).set(bearer(admin)).send({ quantity: 11 });
+    expect(over.status).toBe(409);
+    expect(over.body.error.code).toBe("STOCK_LIMIT_EXCEEDED");
+    expect(await stockOf(id)).toBe(999_990);
+
+    const exact = await request(app).post(`/api/vehicles/${id}/restock`).set(bearer(admin)).send({ quantity: 10 });
+    expect(exact.status).toBe(200);
+    expect(exact.body.quantity).toBe(1_000_000);
+  });
+
+  it("refuses to edit the stock through PUT, and says where to go instead", async () => {
+    const admin = await signInAs("ADMIN");
+    const { id } = await addCamry(admin);
+
+    const response = await request(app).put(`/api/vehicles/${id}`).set(bearer(admin)).send({ make: "Lexus", quantity: 50 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.details).toEqual([{ field: "quantity", message: expect.stringMatching(/restock/i) }]);
+    expect(await stockOf(id)).toBe(3);
+  });
+
   it("lets an admin update, restock and delete, and a deleted vehicle can no longer be bought", async () => {
     const admin = await signInAs("ADMIN");
     const customer = await signInAs("USER");

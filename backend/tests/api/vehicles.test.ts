@@ -286,6 +286,16 @@ describe("POST /api/vehicles/:id/restock", () => {
     expect(ctx.vehicles.vehicles[0]?.quantity).toBe(5);
   });
 
+  it("responds 409 STOCK_LIMIT_EXCEEDED, not a server error, when the stock would pass 1,000,000", async () => {
+    await ctx.vehicles.adjustStock(vehicleId, 999_990 - 5);
+
+    const response = await restock(vehicleId).send({ quantity: 11 });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toEqual({ code: "STOCK_LIMIT_EXCEEDED", message: expect.stringContaining("10") });
+    expect(ctx.vehicles.vehicles[0]?.quantity).toBe(999_990);
+  });
+
   it("responds 404 VEHICLE_NOT_FOUND for an unknown vehicle", async () => {
     const response = await restock("no-such-id").send({ quantity: 1 });
 

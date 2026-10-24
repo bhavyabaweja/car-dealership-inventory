@@ -311,6 +311,32 @@ describe("VehicleService", () => {
       expect(repository.vehicles[0]?.quantity).toBe(2);
     });
 
+    it("can fill the stock exactly to the 1,000,000 limit", async () => {
+      const { id } = await stock({ quantity: 999_900 });
+
+      expect((await service.restock(id, { quantity: 100 })).quantity).toBe(1_000_000);
+    });
+
+    it("refuses units that would take the stock over the limit with STOCK_LIMIT_EXCEEDED, saying how many fit, and changes nothing", async () => {
+      const { id } = await stock({ quantity: 999_950 });
+
+      const error = await service.restock(id, { quantity: 100 }).catch((e) => e);
+
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error.code).toBe("STOCK_LIMIT_EXCEEDED");
+      expect(error.message).toContain("1000000");
+      expect(error.message).toContain("50");
+      expect(repository.vehicles[0]?.quantity).toBe(999_950);
+    });
+
+    it("lets an unexpected repository failure through instead of reporting it as a full warehouse", async () => {
+      const { id } = await stock();
+      const outage = new Error("connection lost");
+      vi.spyOn(repository, "adjustStock").mockRejectedValue(outage);
+
+      await expect(service.restock(id, { quantity: 1 })).rejects.toBe(outage);
+    });
+
     it("reports an unknown vehicle as VEHICLE_NOT_FOUND", async () => {
       await expect(service.restock("no-such-id", { quantity: 1 })).rejects.toMatchObject({
         code: "VEHICLE_NOT_FOUND",

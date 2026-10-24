@@ -181,6 +181,39 @@ describe("PrismaVehicleRepository.adjustStock", () => {
     expect(await vehicles.adjustStock("no-such-id", 5)).toBeNull();
   });
 
+  describe("at the stock limit of 1,000,000", () => {
+    it("allows filling the stock exactly to the limit", async () => {
+      const { id } = await vehicles.create({ ...camry, quantity: 999_990 });
+
+      expect((await vehicles.adjustStock(id, 10))?.quantity).toBe(1_000_000);
+    });
+
+    it("refuses to go over it, reports the room left, and leaves the stock alone", async () => {
+      const { id } = await vehicles.create({ ...camry, quantity: 999_990 });
+
+      const error = await vehicles.adjustStock(id, 11).catch((e) => e);
+
+      expect(error).toMatchObject({ name: "StockLimitExceededError", current: 999_990, requested: 11, room: 10 });
+      expect((await vehicles.findAll())[0]?.quantity).toBe(999_990);
+    });
+
+    it("still reports a missing vehicle as null, even for a restock too large to fit anywhere", async () => {
+      expect(await vehicles.adjustStock("no-such-id", 2_000_000)).toBeNull();
+    });
+
+    it("never goes over it when restocks race: of 3 simultaneous restocks of 400,000, exactly 2 succeed", async () => {
+      const { id } = await vehicles.create({ ...camry, quantity: 0 });
+
+      const attempts = await Promise.allSettled(Array.from({ length: 3 }, () => vehicles.adjustStock(id, 400_000)));
+
+      const rejected = attempts.filter((a): a is PromiseRejectedResult => a.status === "rejected");
+      expect(attempts.filter((a) => a.status === "fulfilled")).toHaveLength(2);
+      expect(rejected).toHaveLength(1);
+      expect(rejected[0]?.reason).toMatchObject({ name: "StockLimitExceededError" });
+      expect((await vehicles.findAll())[0]?.quantity).toBe(800_000);
+    });
+  });
+
   it("never oversells: of 20 simultaneous purchases of 5 units, exactly 5 succeed", async () => {
     const { id } = await vehicles.create({ ...camry, quantity: 5 });
 
@@ -204,6 +237,19 @@ describe("database-level vehicle rules", () => {
 
     await expect(prisma.$executeRaw`UPDATE "Vehicle" SET quantity = quantity - 2 WHERE id = ${id}`).rejects.toThrow(
       /Vehicle_quantity_non_negative/,
+    );
+  });
+
+  it("accepts stock of exactly 1,000,000 but rejects one more, however it is written", async () => {
+    await expect(insertRaw({ quantity: 1_000_000 })).resolves.toBe(1);
+    await expect(insertRaw({ quantity: 1_000_001 })).rejects.toThrow(/Vehicle_quantity_within_limit/);
+  });
+
+  it("rejects stock being pushed over the limit by a plain UPDATE", async () => {
+    const { id } = await vehicles.create({ ...camry, quantity: 1_000_000 });
+
+    await expect(prisma.$executeRaw`UPDATE "Vehicle" SET quantity = quantity + 1 WHERE id = ${id}`).rejects.toThrow(
+      /Vehicle_quantity_within_limit/,
     );
   });
 
