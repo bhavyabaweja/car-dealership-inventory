@@ -209,7 +209,9 @@ describe("searching the vehicles", () => {
     await type("Make", "toy");
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(2));
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "Purchase Toyota Camry" }));
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Purchase Toyota Camry" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm order" }));
 
     expect(await within(screen.getByRole("article", { name: "Toyota Camry" })).findByText("4 in stock")).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(2);

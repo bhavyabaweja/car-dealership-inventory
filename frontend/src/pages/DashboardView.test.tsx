@@ -180,6 +180,7 @@ describe("sorting", () => {
     await chooseSort("Price: high to low");
 
     await user().click(screen.getByRole("button", { name: "Purchase Toyota RAV4" }));
+    await user().click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm order" }));
 
     await screen.findByText("Purchased Toyota RAV4.");
     expect(shown()).toEqual(["Toyota RAV4", "Toyota Camry", "Honda Civic"]);
