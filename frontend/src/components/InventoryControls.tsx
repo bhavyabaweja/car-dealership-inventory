@@ -34,7 +34,7 @@ export function InventoryControls({ tabs, total, view, onChange }: InventoryCont
       {/* Scrolls sideways when the tabs outgrow the row; the scrollbar itself is hidden, the tabs are still reachable by touch, trackpad and Tab. */}
       <div
         role="group"
-        aria-label="Browse by category"
+        aria-label="Filter by category"
         className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <button type="button" aria-pressed={view.category === null} onClick={() => set({ category: null })} className={tabClasses(view.category === null)}>

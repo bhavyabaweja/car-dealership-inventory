@@ -7,6 +7,7 @@ import type { Vehicle } from "../api/types";
 import { useAuth } from "../auth/AuthProvider";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
+import { CategoryCards } from "../components/CategoryCards";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FeaturesStrip } from "../components/FeaturesStrip";
 import { HeroSection } from "../components/HeroSection";
@@ -79,6 +80,26 @@ export function DashboardPage() {
   const tabs = useMemo(() => categoryTabs(vehicles, view.inStockOnly), [vehicles, view.inStockOnly]);
   const category = tabs.some((tab) => tab.key === view.category) ? view.category : null;
   const visible = useMemo(() => applyView(vehicles, { ...view, category }), [vehicles, view, category]);
+
+  // What is in stock per category, for the Browse by category cards and the footer's links.
+  const available = useMemo(() => categoryTabs(vehicles, true), [vehicles]);
+  const suggestions = useMemo(
+    () => ({ makes: [...new Set(vehicles.map((vehicle) => vehicle.make.trim()))].sort((a, b) => a.localeCompare(b)), categories: available.map((tab) => tab.label) }),
+    [vehicles, available],
+  );
+
+  /** Takes the person to the results: the heading of the inventory, where the cursor goes, brought into view. */
+  function showInventory() {
+    document.getElementById("inventory-title")?.focus({ preventScroll: true });
+    const reduceMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("inventory")?.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth" });
+  }
+
+  /** Chooses a category from a card or a footer link. Choosing the chosen card again goes back to everything. */
+  function chooseCategory(key: string, { toggle }: { toggle: boolean }) {
+    setView((current) => ({ ...current, category: toggle && current.category === key ? null : key }));
+    showInventory();
+  }
 
   function setBusy(id: string, busy: boolean) {
     setPurchasing((current) => {
@@ -181,8 +202,14 @@ export function DashboardPage() {
             activeCount={countActive(inputs)}
             onChange={(field, value) => setInputs((current) => ({ ...current, [field]: value }))}
             onClear={clearFilters}
+            onSearch={showInventory}
+            suggestions={suggestions}
           />
         </HeroSection>
+
+        {status === "ready" && available.length > 0 && (
+          <CategoryCards categories={available} chosen={category} onChoose={(key) => chooseCategory(key, { toggle: true })} />
+        )}
 
         <section id="inventory" aria-labelledby="inventory-title" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-10 md:px-12">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -194,7 +221,7 @@ export function DashboardPage() {
                 data-focus-fallback
                 className="font-display text-3xl font-bold tracking-tight text-on-surface focus:outline-none"
               >
-                Vehicles
+                Available inventory
               </h2>
               <p aria-live="polite" className="mt-1 min-h-5 text-sm text-outline">
                 {status === "ready" && visible.length > 0 && `${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}
@@ -285,7 +312,7 @@ export function DashboardPage() {
 
         <FeaturesStrip />
       </main>
-      <SiteFooter />
+      <SiteFooter categories={available} onChooseCategory={(key) => chooseCategory(key, { toggle: false })} />
 
       {/* Each dialog exists only while open, so it always starts fresh. */}
       {panel?.kind === "add" && (

@@ -22,7 +22,7 @@ describe("the Browse by category section", () => {
     openDashboard();
     await screen.findAllByRole("article");
 
-    const names = within(section()).getAllByRole("button").map((button) => button.textContent);
+    const names = within(section()).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
 
     // Sedan has two vehicles but only one is in stock: "available" means buyable.
     expect(names).toEqual(["Sedan 1 available", "SUV 1 available"]);

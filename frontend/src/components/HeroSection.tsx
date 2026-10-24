@@ -12,7 +12,7 @@ const FACTS: ReadonlyArray<[string, string]> = [
 /** The top of the page: what this is, the facts about it, and (as children) the search console. */
 export function HeroSection({ children }: { children: ReactNode }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-surface-container-low to-background">
+    <section id="hero" className="relative overflow-hidden bg-gradient-to-b from-surface-container-low to-background">
       {/* Two soft pools of cold light, as in the design. */}
       <div aria-hidden="true" className="pointer-events-none absolute -top-32 -left-20 size-96 rounded-full bg-secondary-container/20 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute top-1/2 -right-32 size-[32rem] rounded-full bg-primary-container/10 blur-3xl" />
