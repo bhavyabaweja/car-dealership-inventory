@@ -35,12 +35,19 @@ function readLocale(value: string | undefined, warn: (message: string) => void):
   }
 }
 
+function readApiBaseUrl(value: string | undefined, warn: (message: string) => void): string {
+  if (value === undefined) return "";
+  if (/^https?:\/\/[^/]/i.test(value)) return value.replace(/\/+$/, "");
+  warn(`VITE_API_URL "${value}" is not an http(s) address such as https://my-api.onrender.com; calling the API on this site's own origin.`);
+  return "";
+}
+
 /** A misconfigured value falls back to a safe default with a warning, so the app still starts. */
 export function readConfig(env: Env, warn: (message: string) => void = console.warn): AppConfig {
   return {
     currency: readCurrency(setting(env.VITE_CURRENCY), warn),
     locale: readLocale(setting(env.VITE_LOCALE), warn),
-    apiBaseUrl: (setting(env.VITE_API_URL) ?? "").replace(/\/+$/, ""),
+    apiBaseUrl: readApiBaseUrl(setting(env.VITE_API_URL), warn),
   };
 }
 
