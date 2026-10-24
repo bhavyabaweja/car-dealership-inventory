@@ -33,22 +33,24 @@ describe("the header of the signed-in app", () => {
     expect(within(screen.getByRole("banner")).getByText("Admin")).toBeInTheDocument();
   });
 
-  it("signs out, forgets the session, and returns to the login page", async () => {
+  it("signs out, forgets the session, and returns to the landing page", async () => {
     const { storage } = renderApp("/", { stored: storedSession() });
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Sign out" }));
 
-    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /find your perfect drive/i })).toBeInTheDocument();
+    expect(screen.queryByRole("article")).not.toBeInTheDocument(); // the inventory is for signed-in visitors
     expect(storage.items.has(SESSION_KEY)).toBe(false);
     expect(screen.queryByRole("status")).not.toBeInTheDocument(); // signing out is not an expiry
   });
 });
 
 describe("routing", () => {
-  it("sends a signed-out visitor from the dashboard to the login page", () => {
+  it("shows a signed-out visitor the landing page rather than the dashboard", () => {
     renderApp("/");
 
-    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /find your perfect drive/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Welcome back" })).not.toBeInTheDocument();
   });
 
   it.each([["/no/such/page"], ["/vehicles/123"]])("sends %s to the home page", (path) => {
