@@ -22,7 +22,7 @@ model Vehicle {
   category  String
   /// Exact decimal money, never a float. Must be positive (Vehicle_price_positive).
   price     Decimal  @db.Decimal(10, 2)
-  /// Never negative (Vehicle_quantity_non_negative). Changed only through atomic increments.
+  /// Never negative (Vehicle_quantity_non_negative) and never above 1,000,000 (Vehicle_quantity_within_limit). Changed only through atomic increments.
   quantity  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

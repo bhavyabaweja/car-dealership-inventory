@@ -1,6 +1,8 @@
 import {
   InsufficientStockError,
+  MAX_STOCK,
   type NewVehicle,
+  StockLimitExceededError,
   type Vehicle,
   type VehicleChanges,
   type VehicleFilters,
@@ -52,6 +54,7 @@ export class InMemoryVehicleRepository implements VehicleRepository {
     const vehicle = this.vehicles.find((v) => v.id === id);
     if (!vehicle) return null;
     if (vehicle.quantity + delta < 0) throw new InsufficientStockError(vehicle.quantity, -delta);
+    if (vehicle.quantity + delta > MAX_STOCK) throw new StockLimitExceededError(vehicle.quantity, delta);
     vehicle.quantity += delta;
     return { ...vehicle };
   }

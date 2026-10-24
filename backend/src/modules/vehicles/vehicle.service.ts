@@ -7,7 +7,13 @@ import {
   searchVehiclesSchema,
   updateVehicleSchema,
 } from "./vehicle.schemas";
-import { InsufficientStockError, type Vehicle, type VehicleRepository } from "./vehicle.repository";
+import {
+  InsufficientStockError,
+  MAX_STOCK,
+  StockLimitExceededError,
+  type Vehicle,
+  type VehicleRepository,
+} from "./vehicle.repository";
 
 function vehicleNotFound(): NotFoundError {
   return new NotFoundError("Vehicle not found", "VEHICLE_NOT_FOUND");
@@ -57,6 +63,12 @@ export class VehicleService {
     } catch (error) {
       if (error instanceof InsufficientStockError) {
         throw new ConflictError(`Only ${error.available} left in stock`, "INSUFFICIENT_STOCK");
+      }
+      if (error instanceof StockLimitExceededError) {
+        throw new ConflictError(
+          `Stock is limited to ${MAX_STOCK} units; there is room for ${error.room} more`,
+          "STOCK_LIMIT_EXCEEDED",
+        );
       }
       throw error;
     }

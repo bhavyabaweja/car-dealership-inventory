@@ -1,7 +1,9 @@
 import { Prisma, type PrismaClient, type Vehicle as VehicleRow } from "../../generated/prisma/client";
 import {
   InsufficientStockError,
+  MAX_STOCK,
   type NewVehicle,
+  StockLimitExceededError,
   type Vehicle,
   type VehicleChanges,
   type VehicleFilters,
@@ -69,24 +71,23 @@ export class PrismaVehicleRepository implements VehicleRepository {
 
   async adjustStock(id: string, delta: number): Promise<Vehicle | null> {
     try {
-      // One statement does the check and the change together ("... WHERE quantity >= n"),
-      // so two buyers racing for the last unit cannot both win.
-      const row =
-        delta < 0
-          ? await this.prisma.vehicle.update({
-              where: { id, quantity: { gte: -delta } },
-              data: { quantity: { decrement: -delta } },
-            })
-          : await this.prisma.vehicle.update({ where: { id }, data: { quantity: { increment: delta } } });
+      // One statement does the check and the change together ("... WHERE quantity >= n" to remove,
+      // "... WHERE quantity <= limit - n" to add), so two buyers racing for the last unit, or two
+      // restocks racing for the last room, cannot both win.
+      const row = await this.prisma.vehicle.update({
+        where: { id, quantity: delta < 0 ? { gte: -delta } : { lte: MAX_STOCK - delta } },
+        data: { quantity: { increment: delta } },
+      });
       return toVehicle(row);
     } catch (error) {
       if (!isRecordNotFound(error)) throw error;
-      if (delta >= 0) return null;
 
-      // The conditional update matched nothing: no such vehicle, or not enough stock. Look to tell which.
+      // The conditional update matched nothing: no such vehicle, or the change does not fit. Look to tell which.
       const current = await this.prisma.vehicle.findUnique({ where: { id }, select: { quantity: true } });
       if (!current) return null;
-      throw new InsufficientStockError(current.quantity, -delta);
+      throw delta < 0
+        ? new InsufficientStockError(current.quantity, -delta)
+        : new StockLimitExceededError(current.quantity, delta);
     }
   }
 }

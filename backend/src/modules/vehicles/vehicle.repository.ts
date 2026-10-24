@@ -36,6 +36,28 @@ export class InsufficientStockError extends Error {
   }
 }
 
+/**
+ * The most units one vehicle can hold. Far above any real lot, and far below what the database's
+ * integer column can store, so repeated restocks end in a clear refusal instead of an overflow.
+ * The same number is a CHECK constraint (Vehicle_quantity_within_limit) in the database.
+ */
+export const MAX_STOCK = 1_000_000;
+
+/** Thrown when adding stock would take a vehicle past MAX_STOCK. */
+export class StockLimitExceededError extends Error {
+  /** How many more units would still fit. */
+  readonly room: number;
+
+  constructor(
+    readonly current: number,
+    readonly requested: number,
+  ) {
+    super(`Stock is limited to ${MAX_STOCK} units, ${current} held, ${requested} requested`);
+    this.name = "StockLimitExceededError";
+    this.room = MAX_STOCK - current;
+  }
+}
+
 export interface VehicleRepository {
   create(data: NewVehicle): Promise<Vehicle>;
 
@@ -50,9 +72,10 @@ export interface VehicleRepository {
 
   /**
    * Adds `delta` to the stock (negative to remove). Atomic: concurrent calls can never
-   * take the quantity below zero.
+   * take the quantity below zero or above MAX_STOCK.
    * @returns the vehicle with its new quantity, or null if there is no such vehicle.
    * @throws InsufficientStockError if removing would go below zero; the stock is unchanged.
+   * @throws StockLimitExceededError if adding would go above MAX_STOCK; the stock is unchanged.
    */
   adjustStock(id: string, delta: number): Promise<Vehicle | null>;
 }
