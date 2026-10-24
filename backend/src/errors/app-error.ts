@@ -39,6 +39,13 @@ export class ForbiddenError extends AppError {
   }
 }
 
+/** The thing asked for does not exist (HTTP 404). */
+export class NotFoundError extends AppError {
+  constructor(message: string, code = "NOT_FOUND") {
+    super(404, code, message);
+  }
+}
+
 /** The request conflicts with existing data, such as a duplicate email (HTTP 409). */
 export class ConflictError extends AppError {
   constructor(message: string, code = "CONFLICT") {
