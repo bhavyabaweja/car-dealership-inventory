@@ -21,9 +21,10 @@ const base =
 const sizes: Record<Size, string> = { md: "h-11 px-4 text-sm", sm: "h-11 px-3 text-sm sm:h-9" };
 
 const variants: Record<Variant, string> = {
+  // The design's call to action: solid electric cyan with midnight text, and a glow on hover.
   primary:
-    "bg-gradient-to-r from-secondary-container to-primary-container text-white shadow-md hover:brightness-110 " +
-    "active:scale-[0.98] disabled:hover:brightness-100 disabled:active:scale-100",
+    "bg-primary-container font-display font-bold text-on-primary-container hover:bg-primary hover:shadow-[0_0_15px_rgba(0,212,255,0.3)] " +
+    "active:scale-[0.98] disabled:hover:bg-primary-container disabled:hover:shadow-none disabled:active:scale-100",
   secondary:
     "bg-surface-container-low text-on-surface ring-1 ring-inset ring-white/10 hover:text-primary-container " +
     "hover:ring-primary-container/50 disabled:hover:text-on-surface disabled:hover:ring-white/10",
