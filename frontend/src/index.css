@@ -35,3 +35,7 @@
     animation: none;
   }
 }
+/* While a dialog is open the page behind it should not scroll. */
+body:has(dialog[open]) {
+  overflow: hidden;
+}

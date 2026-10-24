@@ -1,4 +1,5 @@
 import type { VehicleFilters } from "../api/types";
+import { AMOUNT_MESSAGE, isAmount } from "./money";
 
 /** What is typed in the search form, exactly as typed: strings, possibly blank or wrong. */
 export interface FilterInputs {
@@ -15,9 +16,6 @@ const KEYS = Object.keys(emptyFilters) as (keyof FilterInputs)[];
 const TEXT_KEYS = ["make", "model", "category"] as const;
 const PRICE_KEYS = ["minPrice", "maxPrice"] as const;
 
-/** The server's own rule for an amount: up to eight whole digits, at most two decimals, no sign or exponent. */
-const AMOUNT = /^(0|[1-9]\d{0,7})(\.\d{1,2})?$/;
-const AMOUNT_MESSAGE = "Enter an amount like 25000 or 25000.50.";
 const RANGE_MESSAGE = "The maximum can't be lower than the minimum.";
 
 export type FilterErrors = Partial<Record<(typeof PRICE_KEYS)[number], string>>;
@@ -38,7 +36,7 @@ export function toFilters(inputs: FilterInputs): { filters: VehicleFilters; erro
   for (const key of PRICE_KEYS) {
     const text = inputs[key].trim();
     if (!text) continue;
-    if (AMOUNT.test(text)) filters[key] = text;
+    if (isAmount(text)) filters[key] = text;
     else errors[key] = AMOUNT_MESSAGE;
   }
 
