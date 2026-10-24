@@ -73,7 +73,7 @@ describe("its header", () => {
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
     await user().click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
   });
@@ -100,7 +100,7 @@ describe("the inventory section's own Log in", () => {
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
     await user().click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
   });
 });
@@ -176,7 +176,7 @@ describe("searching before logging in", () => {
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
     await user().click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy&maxPrice=30000");
     expect(screen.getByLabelText("Make")).toHaveValue("toy");

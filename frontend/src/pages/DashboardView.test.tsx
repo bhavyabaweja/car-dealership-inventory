@@ -14,9 +14,9 @@ const openDashboard = (api = fakeVehiclesApi(), role: "USER" | "ADMIN" = "USER")
 
 /** The names of the vehicles on screen, in order. */
 const shown = () => screen.getAllByRole("article").map((card) => within(card).getByRole("heading").textContent);
-const categories = () => screen.getByRole("group", { name: "Filter by category" });
+const categories = () => screen.getByRole("group", { name: "Browse by category" });
 const tab = (name: string | RegExp) => within(categories()).getByRole("button", { name });
-const stockSwitch = () => screen.getByRole("switch", { name: "In-stock only" });
+const stockSwitch = () => screen.getByRole("switch", { name: "In stock only" });
 const chooseSort = (label: string) => user().selectOptions(screen.getByRole("combobox", { name: "Sort by" }), label);
 
 describe("category tabs", () => {
@@ -90,7 +90,7 @@ describe("category tabs", () => {
 
     await screen.findByText("No vehicles available yet.");
 
-    expect(screen.queryByRole("group", { name: "Filter by category" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Browse by category" })).not.toBeInTheDocument();
   });
 });
 
@@ -142,7 +142,7 @@ describe("sorting", () => {
       "Default order",
       "Price: low to high",
       "Price: high to low",
-      "Name (A to Z)",
+      "Most in stock",
     ]);
     expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveValue("default");
   });
@@ -161,14 +161,12 @@ describe("sorting", () => {
     expect(shown()).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
   });
 
-  it("orders by name, make first, and the server's order is still there on Default", async () => {
+  it("orders by stock, most first", async () => {
     openDashboard();
     await screen.findAllByRole("article");
 
-    await chooseSort("Name (A to Z)");
-    expect(shown()).toEqual(["Honda Civic", "Toyota Camry", "Toyota RAV4"]);
+    await chooseSort("Most in stock");
 
-    await chooseSort("Default order");
     expect(shown()).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
   });
 
@@ -180,7 +178,6 @@ describe("sorting", () => {
     await chooseSort("Price: high to low");
 
     await user().click(screen.getByRole("button", { name: "Purchase Toyota RAV4" }));
-    await user().click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm order" }));
 
     await screen.findByText("Purchased Toyota RAV4.");
     expect(shown()).toEqual(["Toyota RAV4", "Toyota Camry", "Honda Civic"]);

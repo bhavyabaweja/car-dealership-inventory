@@ -10,9 +10,8 @@ vi.mock("../config", () => ({ config: { currency: "EUR", locale: "de-DE", apiBas
 function setup(props: Partial<React.ComponentProps<typeof SearchFilters>> = {}) {
   const onChange = vi.fn();
   const onClear = vi.fn();
-  const onSearch = vi.fn();
-  render(<SearchFilters values={emptyFilters} errors={{}} activeCount={0} onChange={onChange} onClear={onClear} onSearch={onSearch} {...props} />);
-  return { onChange, onClear, onSearch };
+  render(<SearchFilters values={emptyFilters} errors={{}} activeCount={0} onChange={onChange} onClear={onClear} {...props} />);
+  return { onChange, onClear };
 }
 
 describe("SearchFilters", () => {
@@ -62,9 +61,7 @@ describe("SearchFilters", () => {
 
   describe("clearing", () => {
     it("offers to clear the filters only when there are some, and does so", async () => {
-      const first = render(
-        <SearchFilters values={emptyFilters} errors={{}} activeCount={0} onChange={() => {}} onClear={() => {}} onSearch={() => {}} />,
-      );
+      const first = render(<SearchFilters values={emptyFilters} errors={{}} activeCount={0} onChange={() => {}} onClear={() => {}} />);
       expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
       first.unmount();
 

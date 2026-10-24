@@ -38,7 +38,7 @@ export function renderApp(
   }
 
   const { pathname, search } = new URL(url, "http://localhost");
-  render(
+  const { unmount } = render(
     <AppProviders
       authApi={authApi as unknown as AuthApi}
       vehiclesApi={vehiclesApi as unknown as VehiclesApi}
@@ -53,5 +53,5 @@ export function renderApp(
     </AppProviders>,
   );
 
-  return { authApi, vehiclesApi, storage, auth };
+  return { authApi, vehiclesApi, storage, auth, unmount };
 }

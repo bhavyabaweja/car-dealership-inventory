@@ -176,13 +176,13 @@ describe("searching the vehicles", () => {
 
     await type("Make", "h");
 
-    const list = screen.getByRole("list", { name: "Available inventory" });
+    const list = screen.getByRole("list", { name: "Vehicles" });
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
     expect(screen.getAllByRole("article")).toHaveLength(3);
 
     finish([vehicle({ id: "v-civic", make: "Honda", model: "Civic" })]);
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(1));
-    expect(screen.getByRole("list", { name: "Available inventory" })).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByRole("list", { name: "Vehicles" })).toHaveAttribute("aria-busy", "false");
   });
 
   it("keeps the search fields when a search fails, and Try again repeats that search", async () => {
@@ -209,9 +209,7 @@ describe("searching the vehicles", () => {
     await type("Make", "toy");
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(2));
 
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Purchase Toyota Camry" }));
-    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm order" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Purchase Toyota Camry" }));
 
     expect(await within(screen.getByRole("article", { name: "Toyota Camry" })).findByText("4 in stock")).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(2);
