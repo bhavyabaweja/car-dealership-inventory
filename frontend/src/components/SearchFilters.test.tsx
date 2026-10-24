@@ -86,6 +86,24 @@ describe("SearchFilters", () => {
       expect(toggle).toHaveAttribute("aria-expanded", "true");
     });
 
+    it("starts open when a link or a reload brought back a filter that would otherwise be hidden, so the person can see what is applied", () => {
+      setup({ values: { ...emptyFilters, maxPrice: "30000" } });
+
+      expect(screen.getByRole("button", { name: /^Filters/ })).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it.each([["category", "SUV"], ["minPrice", "10000"]] as const)("starts open for a %s that is already filled in", (field, text) => {
+      setup({ values: { ...emptyFilters, [field]: text } });
+
+      expect(screen.getByRole("button", { name: /^Filters/ })).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("starts closed when only the always-visible fields are filled in, or when nothing is, and for spaces alone", () => {
+      setup({ values: { ...emptyFilters, make: "Toyota", model: "Camry", category: "   " } });
+
+      expect(screen.getByRole("button", { name: /^Filters/ })).toHaveAttribute("aria-expanded", "false");
+    });
+
     it("shows how many filters are in use, so a closed panel does not hide that a search is narrowed", () => {
       setup({ activeCount: 3 });
 

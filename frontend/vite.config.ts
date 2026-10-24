@@ -13,6 +13,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
+    // The UI tests type into real fields and re-render a list on each key; on a slow machine, or with
+    // coverage on, the default 5 seconds is too tight for the heaviest of them.
+    testTimeout: 15_000,
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

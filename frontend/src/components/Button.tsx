@@ -1,7 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import type { ComponentProps } from "react";
 
-type Variant = "primary" | "secondary" | "danger";
+type Variant = "primary" | "secondary" | "danger" | "ghost";
 type Size = "md" | "sm";
 
 interface ButtonProps extends ComponentProps<"button"> {
@@ -23,6 +23,7 @@ const variants: Record<Variant, string> = {
   primary: "bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 disabled:hover:bg-indigo-600",
   secondary: "bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:hover:bg-white",
   danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 disabled:hover:bg-red-600",
+  ghost: "text-indigo-700 hover:bg-indigo-50 disabled:hover:bg-transparent",
 };
 
 export function Button({

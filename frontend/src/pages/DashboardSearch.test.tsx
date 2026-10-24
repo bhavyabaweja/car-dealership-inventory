@@ -19,7 +19,8 @@ function openDashboard({ url = "/", api = fakeVehiclesApi() } = {}) {
 
 const filtersOf = (call: unknown[] | undefined) => call?.[0] as VehicleFilters;
 const lastSearch = (api: ReturnType<typeof fakeVehiclesApi>) => filtersOf(api.find.mock.lastCall);
-const type = (label: string | RegExp, text: string) => userEvent.setup().type(screen.getByLabelText(label), text);
+// No pause between keystrokes: the dashboard re-renders on each one, and a pause adds seconds without testing anything.
+const type = (label: string | RegExp, text: string) => userEvent.setup({ delay: null }).type(screen.getByLabelText(label), text);
 
 describe("searching the vehicles", () => {
   it("shows the search fields above the list", async () => {
