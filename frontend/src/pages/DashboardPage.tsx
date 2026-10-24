@@ -1,4 +1,4 @@
-import { CloudOff, Plus, RefreshCw, SearchX } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useVehiclesApi } from "../api/ApiProvider";
@@ -7,12 +7,10 @@ import type { Vehicle } from "../api/types";
 import { useAuth } from "../auth/AuthProvider";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
-import { CategoryCards } from "../components/CategoryCards";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { FeaturesStrip, FinalCta } from "../components/FeaturesStrip";
+import { FeaturesStrip } from "../components/FeaturesStrip";
 import { HeroSection } from "../components/HeroSection";
 import { InventoryControls } from "../components/InventoryControls";
-import { PurchaseDialog } from "../components/PurchaseDialog";
 import { RestockDialog } from "../components/RestockDialog";
 import { SearchFilters } from "../components/SearchFilters";
 import { SiteFooter } from "../components/SiteFooter";
@@ -33,19 +31,16 @@ const STALE_LIST_CODES = new Set(["INSUFFICIENT_STOCK", "VEHICLE_NOT_FOUND"]);
 const SEARCH_PAUSE_MS = 300;
 
 // Four across only where there is room for an administrator's three buttons on a card (see VehicleCard).
-// The design's grid: one column, two from tablet width, three from laptop width.
-const grid = "grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3";
+const grid = "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 min-[1360px]:grid-cols-4";
 
-/** The loading-failed, no-results and nothing-here-yet panels share one look. */
-const statePanel = "flex flex-col items-center justify-center rounded-2xl border border-white/7 bg-surface-container px-4 py-20 text-center";
+const emptyPanel = "rounded-2xl border border-dashed border-white/15 bg-surface-container/60 p-10 text-center";
 
 /** The dialog that is open, if any, with the vehicle it is about. */
 type Panel =
   | { kind: "add" }
   | { kind: "edit"; vehicle: Vehicle }
   | { kind: "restock"; vehicle: Vehicle }
-  | { kind: "delete"; vehicle: Vehicle }
-  | { kind: "purchase"; vehicle: Vehicle };
+  | { kind: "delete"; vehicle: Vehicle };
 
 const nameOf = (vehicle: Vehicle) => `${vehicle.make} ${vehicle.model}`;
 
@@ -59,7 +54,6 @@ export function DashboardPage() {
   const [panel, setPanel] = useState<Panel | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string>();
-  const [purchaseError, setPurchaseError] = useState<string>();
 
   // What is typed, as typed. The search follows it once typing pauses, and the address bar follows the search.
   const [inputs, setInputs] = useState<FilterInputs>(() => filtersFromParams(params));
@@ -83,27 +77,6 @@ export function DashboardPage() {
   const category = tabs.some((tab) => tab.key === view.category) ? view.category : null;
   const visible = useMemo(() => applyView(vehicles, { ...view, category }), [vehicles, view, category]);
 
-  // What is in stock per category, for the Browse by category cards and the footer's links.
-  const available = useMemo(() => categoryTabs(vehicles, true), [vehicles]);
-  const showCategories = status === "ready" && available.length > 0;
-  const suggestions = useMemo(
-    () => ({ makes: [...new Set(vehicles.map((vehicle) => vehicle.make.trim()))].sort((a, b) => a.localeCompare(b)), categories: available.map((tab) => tab.label) }),
-    [vehicles, available],
-  );
-
-  /** Takes the person to the results: the heading of the inventory, where the cursor goes, brought into view. */
-  function showInventory() {
-    document.getElementById("inventory-title")?.focus({ preventScroll: true });
-    const reduceMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById("inventory")?.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth" });
-  }
-
-  /** Chooses a category from a card or a footer link. Choosing the chosen card again goes back to everything. */
-  function chooseCategory(key: string, { toggle }: { toggle: boolean }) {
-    setView((current) => ({ ...current, category: toggle && current.category === key ? null : key }));
-    showInventory();
-  }
-
   function setBusy(id: string, busy: boolean) {
     setPurchasing((current) => {
       const next = new Set(current);
@@ -113,33 +86,19 @@ export function DashboardPage() {
     });
   }
 
-  /** Purchase on a card opens the order summary; nothing is bought until it is confirmed there. */
-  function startPurchase(vehicle: Vehicle) {
-    if (vehicle.quantity === 0) return;
-    setPurchaseError(undefined);
-    setPanel({ kind: "purchase", vehicle });
-  }
-
-  async function confirmPurchase(vehicle: Vehicle) {
+  async function purchase(vehicle: Vehicle) {
     if (purchasing.has(vehicle.id)) return;
 
-    const name = nameOf(vehicle);
-    setPurchaseError(undefined);
+    const name = `${vehicle.make} ${vehicle.model}`;
     setBusy(vehicle.id, true);
     try {
       // The server answers with the vehicle as it now is, so the card shows the real stock, not a guess.
       replace(await api.purchase(vehicle.id));
-      closePanel();
       toast.success(`Purchased ${name}.`);
     } catch (failure) {
-      if (failure instanceof ApiError && STALE_LIST_CODES.has(failure.code)) {
-        // Someone else bought it first, or it was removed: what is on screen is stale, so say so and refresh it.
-        closePanel();
-        toast.error(`${name}: ${messageFor(failure)}`);
-        reload();
-      } else {
-        setPurchaseError(messageFor(failure)); // in the dialog, where the person is looking, ready for another try
-      }
+      toast.error(`${name}: ${messageFor(failure)}`);
+      // Someone else bought it first, or it was removed: what is on screen is stale, so refresh it.
+      if (failure instanceof ApiError && STALE_LIST_CODES.has(failure.code)) reload();
     } finally {
       setBusy(vehicle.id, false);
     }
@@ -148,7 +107,6 @@ export function DashboardPage() {
   function closePanel() {
     setPanel(null);
     setDeleteError(undefined);
-    setPurchaseError(undefined);
   }
 
   /**
@@ -196,138 +154,120 @@ export function DashboardPage() {
 
   return (
     <div id="top">
-      <AppHeader hasCategories={showCategories} />
+      <AppHeader />
       <main>
-        <HeroSection hasCategories={showCategories} />
-
-        {/* The search console floats over the foot of the hero, as in the design. */}
-        <section aria-label="Search" className="relative z-20 mx-auto -mt-14 max-w-7xl px-4 md:px-8">
+        <HeroSection>
           <SearchFilters
             values={inputs}
             errors={errors}
             activeCount={countActive(inputs)}
             onChange={(field, value) => setInputs((current) => ({ ...current, [field]: value }))}
             onClear={clearFilters}
-            onSearch={showInventory}
-            suggestions={suggestions}
           />
-        </section>
+        </HeroSection>
 
-        {showCategories && (
-          <CategoryCards categories={available} chosen={category} onChoose={(key) => chooseCategory(key, { toggle: true })} />
-        )}
-
-        <section id="inventory" aria-labelledby="inventory-title" className="mx-auto max-w-7xl scroll-mt-28 px-4 py-12 md:px-8">
-          <div className="mb-6 flex flex-col gap-4 border-b border-white/8 pb-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                {/* Where focus lands when a dialog's own opener is gone (see Dialog). */}
-                <h2
-                  id="inventory-title"
-                  tabIndex={-1}
-                  data-focus-fallback
-                  className="font-display text-2xl font-bold text-white focus:outline-none sm:text-3xl"
-                >
-                  Available inventory
-                </h2>
-                <p aria-live="polite" className="mt-1 min-h-5 text-sm text-outline">
-                  {status === "ready" && visible.length > 0 && (
-                    <>
-                      Showing <span>{`${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-              {isAdmin && (
-                <Button onClick={() => setPanel({ kind: "add" })}>
-                  <Plus className="size-4" aria-hidden="true" />
-                  Add vehicle
-                </Button>
-              )}
+        <section id="inventory" aria-labelledby="inventory-title" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-10 md:px-12">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              {/* Where focus lands when a dialog's own opener is gone (see Dialog). */}
+              <h2
+                id="inventory-title"
+                tabIndex={-1}
+                data-focus-fallback
+                className="font-display text-3xl font-bold tracking-tight text-on-surface focus:outline-none"
+              >
+                Vehicles
+              </h2>
+              <p aria-live="polite" className="mt-1 min-h-5 text-sm text-outline">
+                {status === "ready" && visible.length > 0 && `${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}
+              </p>
             </div>
-
-            {status === "ready" && vehicles.length > 0 && (
-              <InventoryControls tabs={tabs} total={tabs.reduce((sum, tab) => sum + tab.count, 0)} view={{ ...view, category }} onChange={setView} />
+            {isAdmin && (
+              <Button onClick={() => setPanel({ kind: "add" })}>
+                <Plus className="size-4" aria-hidden="true" />
+                Add vehicle
+              </Button>
             )}
           </div>
 
-          {status === "loading" && (
-            <div role="status">
-              <span className="sr-only">Loading vehicles…</span>
-              <div className={grid}>
-                {[0, 1, 2, 3, 4, 5].map((slot) => (
-                  <VehicleCardSkeleton key={slot} />
-                ))}
+          {status === "ready" && vehicles.length > 0 && (
+            <div className="-mx-5 mt-4 bg-background/90 px-5 py-3 backdrop-blur md:sticky md:top-20 md:z-20 md:-mx-12 md:px-12">
+              <InventoryControls tabs={tabs} total={tabs.reduce((sum, tab) => sum + tab.count, 0)} view={{ ...view, category }} onChange={setView} />
+            </div>
+          )}
+
+          <div className="mt-4">
+            {status === "loading" && (
+              <div role="status">
+                <span className="sr-only">Loading vehicles…</span>
+                <div className={grid}>
+                  {[0, 1, 2, 3, 4, 5].map((slot) => (
+                    <VehicleCardSkeleton key={slot} />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {status === "error" && (
-            <div role="alert" className={`${statePanel} border-rose-500/20`}>
-              <span className="mb-4 grid size-16 place-items-center rounded-2xl border border-rose-500/30 bg-rose-950/40 text-rose-400">
-                <CloudOff className="size-8" aria-hidden="true" />
-              </span>
-              <p className="mb-2 font-display text-2xl font-bold text-white">We couldn't load the vehicles</p>
-              <p className="mb-6 max-w-md text-sm text-outline">{error}</p>
-              <Button onClick={reload} className="bg-secondary-container! text-white! hover:bg-blue-600!">
-                <RefreshCw className="size-[18px]" aria-hidden="true" />
-                Try again
-              </Button>
-            </div>
-          )}
+            {status === "error" && (
+              <div role="alert" className="rounded-2xl border border-red-400/30 bg-red-950/40 p-6 text-center">
+                <p className="font-semibold text-on-error-container">We couldn't load the vehicles</p>
+                <p className="mt-1 text-sm text-error">{error}</p>
+                <Button variant="secondary" className="mt-4" onClick={reload}>
+                  Try again
+                </Button>
+              </div>
+            )}
 
-          {status === "ready" && vehicles.length === 0 && (
-            <div className={statePanel}>
-              <span className="mb-4 grid size-16 place-items-center rounded-2xl border border-white/8 bg-surface-container-high text-primary-container">
-                <SearchX className="size-8" aria-hidden="true" />
-              </span>
-              {searching ? (
-                <>
-                  <p className="mb-2 font-display text-2xl font-bold text-white">No vehicles match your search.</p>
-                  <p className="mb-6 max-w-md text-sm text-outline">Try different words or a wider price range, or clear what you have searched for.</p>
-                  <Button onClick={clearFilters}>Show all vehicles</Button>
-                </>
-              ) : (
-                <>
-                  <p className="mb-2 font-display text-2xl font-bold text-white">No vehicles available yet.</p>
-                  <p className="max-w-md text-sm text-outline">Check back soon.</p>
-                </>
-              )}
-            </div>
-          )}
+            {status === "ready" && vehicles.length === 0 && (
+              <div className={emptyPanel}>
+                {searching ? (
+                  <>
+                    <p className="font-display text-lg font-semibold text-on-surface">No vehicles match your search.</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">Try different words or a wider price range.</p>
+                    <Button variant="secondary" className="mt-4" onClick={clearFilters}>
+                      Show all vehicles
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-display text-lg font-semibold text-on-surface">No vehicles available yet.</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">Check back soon.</p>
+                  </>
+                )}
+              </div>
+            )}
 
-          {status === "ready" && vehicles.length > 0 && visible.length === 0 && (
-            <div className={statePanel}>
-              <span className="mb-4 grid size-16 place-items-center rounded-2xl border border-white/8 bg-surface-container-high text-primary-container">
-                <SearchX className="size-8" aria-hidden="true" />
-              </span>
-              <p className="mb-2 font-display text-2xl font-bold text-white">No vehicles in this view.</p>
-              <p className="mb-6 max-w-md text-sm text-outline">Try another category, or turn off "In-stock only".</p>
-              <Button onClick={() => setView(defaultView)}>Show everything</Button>
-            </div>
-          )}
+            {status === "ready" && vehicles.length > 0 && visible.length === 0 && (
+              <div className={emptyPanel}>
+                <p className="font-display text-lg font-semibold text-on-surface">No vehicles in this view.</p>
+                <p className="mt-1 text-sm text-on-surface-variant">Try another category, or turn off "In stock only".</p>
+                <Button variant="secondary" className="mt-4" onClick={() => setView(defaultView)}>
+                  Show everything
+                </Button>
+              </div>
+            )}
 
-          {status === "ready" && visible.length > 0 && (
-            <ul aria-labelledby="inventory-title" className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
-              {visible.map((vehicle) => (
-                <li key={vehicle.id}>
-                  {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
-                  <VehicleCard
-                    vehicle={vehicle}
-                    onPurchase={isAdmin ? undefined : startPurchase}
-                    purchasing={purchasing.has(vehicle.id)}
-                    admin={adminActions}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
+            {status === "ready" && visible.length > 0 && (
+              <ul aria-labelledby="inventory-title" className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
+                {visible.map((vehicle) => (
+                  <li key={vehicle.id}>
+                    {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
+                    <VehicleCard
+                      vehicle={vehicle}
+                      onPurchase={isAdmin ? undefined : purchase}
+                      purchasing={purchasing.has(vehicle.id)}
+                      admin={adminActions}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
 
         <FeaturesStrip />
-        <FinalCta />
       </main>
-      <SiteFooter hasCategories={showCategories} categories={available} onChooseCategory={(key) => chooseCategory(key, { toggle: false })} />
+      <SiteFooter />
 
       {/* Each dialog exists only while open, so it always starts fresh. */}
       {panel?.kind === "add" && (
@@ -363,15 +303,6 @@ export function DashboardPage() {
             closePanel();
             toast.success(`Restocked ${nameOf(restocked)}: ${restocked.quantity} in stock.`);
           }}
-        />
-      )}
-      {panel?.kind === "purchase" && (
-        <PurchaseDialog
-          vehicle={panel.vehicle}
-          busy={purchasing.has(panel.vehicle.id)}
-          error={purchaseError}
-          onConfirm={() => confirmPurchase(panel.vehicle)}
-          onCancel={closePanel}
         />
       )}
       {panel?.kind === "delete" && (

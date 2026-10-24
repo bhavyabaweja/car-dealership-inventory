@@ -57,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         role="region"
         aria-label="Notifications"
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:items-end sm:px-0 sm:pb-0"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
       >
         {toasts.map((toast) => (
           <ToastCard key={toast.id} toast={toast} onDismiss={() => dismiss(toast.id)} />
@@ -74,12 +74,9 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   return (
     <div
       role={isError ? "alert" : undefined}
-      className={
-        "toast-in pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border p-3.5 text-sm font-medium shadow-2xl " +
-        (isError ? "border-rose-500/40 bg-rose-950/95 text-rose-200" : "border-emerald-500/40 bg-emerald-950/95 text-emerald-200")
-      }
+      className="toast-in pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl bg-surface-container-highest p-3.5 text-sm text-on-surface shadow-2xl ring-1 ring-white/10"
     >
-      <Icon className={`mt-0.5 size-4 shrink-0 ${isError ? "text-rose-400" : "text-emerald-400"}`} aria-hidden="true" />
+      <Icon className={`mt-0.5 size-4 shrink-0 ${isError ? "text-red-300" : "text-emerald-400"}`} aria-hidden="true" />
       <p className="min-w-0 flex-1">{toast.message}</p>
       <button
         type="button"

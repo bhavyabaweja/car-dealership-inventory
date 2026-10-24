@@ -1,12 +1,12 @@
 import { Lock } from "lucide-react";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { AccountDialog } from "../components/AccountDialog";
-import { AppHeader } from "../components/AppHeader";
-import { FeaturesStrip, FinalCta } from "../components/FeaturesStrip";
-import { HeroSection } from "../components/HeroSection";
-import { SearchFilters } from "../components/SearchFilters";
-import { SiteFooter } from "../components/SiteFooter";
+import { AccountDialog } from "../components/landing/AccountDialog";
+import { LandingCta, LandingFeatures } from "../components/landing/LandingFeatures";
+import { LandingFooter } from "../components/landing/LandingFooter";
+import { LandingHeader } from "../components/landing/LandingHeader";
+import { LandingHero } from "../components/landing/LandingHero";
+import { LandingSearch } from "../components/landing/LandingSearch";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { countActive, emptyFilters, type FilterInputs, filtersFromParams, paramsFromFilters, toFilters } from "../lib/filters";
 
@@ -35,12 +35,12 @@ export function LandingPage() {
 
   return (
     <div id="top">
-      <AppHeader hasCategories={false} />
+      <LandingHeader />
       <main>
-        <HeroSection hasCategories={false} />
+        <LandingHero />
 
         <section aria-label="Search" className="relative z-20 mx-auto -mt-14 max-w-7xl px-4 md:px-8">
-          <SearchFilters
+          <LandingSearch
             values={inputs}
             errors={errors}
             activeCount={countActive(inputs)}
@@ -83,10 +83,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        <FeaturesStrip />
-        <FinalCta />
+        <LandingFeatures />
+        <LandingCta />
       </main>
-      <SiteFooter />
+      <LandingFooter />
 
       {asking && <AccountDialog from={destination} onClose={() => setAsking(false)} />}
     </div>

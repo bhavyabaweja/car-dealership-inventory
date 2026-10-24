@@ -1,6 +1,6 @@
 import { Link } from "react-router";
-import { Button } from "./Button";
-import { Dialog } from "./Dialog";
+import { Button } from "../Button";
+import { Dialog } from "../Dialog";
 
 interface AccountDialogProps {
   /** Where to come back to after logging in or registering, such as the page with the visitor's search in its address. */

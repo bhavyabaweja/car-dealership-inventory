@@ -21,10 +21,15 @@ const base =
 const sizes: Record<Size, string> = { md: "h-11 px-4 text-sm", sm: "h-11 px-3 text-sm sm:h-9" };
 
 const variants: Record<Variant, string> = {
-  // The design's call to action: solid electric cyan with midnight text, and a glow on hover.
+  // The updated design's call to action: solid electric cyan with midnight text, and a glow on hover.
+  // The signed-in inventory (the first design) has its own: a blue-to-cyan gradient with white text.
   primary:
     "bg-primary-container font-display font-bold text-on-primary-container hover:bg-primary hover:shadow-[0_0_15px_rgba(0,212,255,0.3)] " +
-    "active:scale-[0.98] disabled:hover:bg-primary-container disabled:hover:shadow-none disabled:active:scale-100",
+    "active:scale-[0.98] disabled:hover:bg-primary-container disabled:hover:shadow-none disabled:active:scale-100 " +
+    "in-[.theme-inventory]:bg-gradient-to-r in-[.theme-inventory]:from-secondary-container in-[.theme-inventory]:to-primary-container " +
+    "in-[.theme-inventory]:font-sans in-[.theme-inventory]:font-semibold in-[.theme-inventory]:text-white in-[.theme-inventory]:shadow-md " +
+    "in-[.theme-inventory]:hover:bg-primary-container in-[.theme-inventory]:hover:shadow-md in-[.theme-inventory]:hover:brightness-110 " +
+    "in-[.theme-inventory]:disabled:hover:brightness-100",
   secondary:
     "bg-surface-container-low text-on-surface ring-1 ring-inset ring-white/10 hover:text-primary-container " +
     "hover:ring-primary-container/50 disabled:hover:text-on-surface disabled:hover:ring-white/10",

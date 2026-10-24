@@ -27,6 +27,7 @@ export function TextField({ label, labelClassName, hint, error, id, className = 
         aria-describedby={error || showHint ? messageId : undefined}
         className={
           "mt-1.5 block h-11 w-full rounded-lg bg-surface-container-low px-3 text-on-surface placeholder:text-outline " +
+          "in-[.theme-inventory]:bg-surface-container-lowest/70 " +
           "ring-1 ring-inset transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-container " +
           "disabled:opacity-60 " +
           `${error ? "ring-red-400/70" : "ring-white/12"} ${className}`

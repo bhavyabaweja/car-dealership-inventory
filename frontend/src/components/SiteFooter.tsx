@@ -1,118 +1,54 @@
-import { CarFront } from "lucide-react";
-import { Link } from "react-router";
-import { useAuth } from "../auth/AuthProvider";
+import { Car } from "lucide-react";
 import { config } from "../config";
-import type { CategoryTab } from "../lib/inventoryView";
 import { BrandMark } from "./BrandMark";
 
 const link =
-  "rounded text-left text-xs transition-colors hover:text-primary-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container";
-const heading = "font-display text-sm font-semibold tracking-wider text-white uppercase";
+  "rounded text-sm text-on-surface-variant transition-colors hover:text-primary-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container";
 
-interface SiteFooterProps {
-  /** Whether the page has a categories section to link to. */
-  hasCategories?: boolean;
-  /** The categories the vehicles on screen have, to link to. A visitor, who is shown no vehicles, has none. */
-  categories?: CategoryTab[];
-  onChooseCategory?: (key: string) => void;
-}
-
-/** The foot of the page. Only things that are true: where to go, who is signed in, and how prices and pictures should be read. */
-export function SiteFooter({ hasCategories = false, categories = [], onChooseCategory }: SiteFooterProps) {
-  const { user, isAdmin } = useAuth();
-
+/** The foot of the page. Only things that are true: where to go, and how prices and pictures should be read. */
+export function SiteFooter() {
   return (
-    <footer className="mt-12 w-full border-t border-white/8 bg-surface-container-lowest text-outline">
-      <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="mb-12 grid grid-cols-1 gap-10 md:grid-cols-4">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-tr from-secondary-container to-primary-container p-0.5">
-                <span className="grid size-full place-items-center rounded-[6px] bg-background">
-                  <CarFront className="size-[18px] text-primary-container" aria-hidden="true" />
-                </span>
-              </span>
-              <BrandMark />
-            </div>
-            <p className="text-xs leading-relaxed text-outline">
-              AutoVault is a modern automotive marketplace offering transparent live vehicle inventory and straightforward online purchasing.
-            </p>
+    <footer className="border-t border-white/5 bg-surface-container-lowest">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:px-12 lg:grid-cols-[1.4fr_1fr_1.4fr]">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-secondary-container to-primary-container text-white">
+              <Car className="size-4" aria-hidden="true" />
+            </span>
+            <BrandMark />
           </div>
-
-          {user ? (
-            <nav aria-label="Footer: inventory" className="space-y-3">
-              <h2 className={heading}>Inventory</h2>
-              {categories.length > 0 ? (
-                <ul className="space-y-2">
-                  {categories.map((category) => (
-                    <li key={category.key}>
-                      <button type="button" className={link} onClick={() => onChooseCategory?.(category.key)}>
-                        {category.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs">No vehicles listed yet.</p>
-              )}
-            </nav>
-          ) : (
-            <nav aria-label="Footer: account" className="space-y-3">
-              <h2 className={heading}>Account</h2>
-              <ul className="space-y-2">
-                <li>
-                  <Link className={link} to="/login" state={{ from: "/" }}>
-                    Log in
-                  </Link>
-                </li>
-                <li>
-                  <Link className={link} to="/register" state={{ from: "/" }}>
-                    Create an account
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          )}
-
-          <nav aria-label="Footer: platform" className="space-y-3">
-            <h2 className={heading}>Platform</h2>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <a className={link} href="#hero">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a className={link} href="#inventory">
-                  All inventory
-                </a>
-              </li>
-              {hasCategories && (
-                <li>
-                  <a className={link} href="#categories">
-                    Browse categories
-                  </a>
-                </li>
-              )}
-              <li>
-                <a className={link} href="#features">
-                  About
-                </a>
-              </li>
-            </ul>
-          </nav>
-
-          <div className="space-y-3">
-            <h2 className={heading}>Good to know</h2>
-            <ul className="space-y-2 text-xs leading-relaxed">
-              {user && <li>Signed in as {isAdmin ? "an administrator" : "a customer"}.</li>}
-              <li>Prices are shown in {config.currency}.</li>
-              <li>The pictures on the cards are illustrations of a kind of car, not photographs of the vehicles themselves.</li>
-            </ul>
-          </div>
+          <p className="mt-4 max-w-xs text-sm leading-6 text-on-surface-variant">
+            A dealership inventory you can search, buy from and, if you are an administrator, manage.
+          </p>
         </div>
 
-        <p className="border-t border-white/8 pt-8 text-xs text-outline">&copy; {new Date().getFullYear()} AutoVault. All rights reserved.</p>
+        <nav aria-label="Footer">
+          <h2 className="text-xs font-bold tracking-wider text-on-surface uppercase">Browse</h2>
+          <ul className="mt-4 space-y-2.5">
+            <li>
+              <a href="#top" className={link}>
+                Back to the top
+              </a>
+            </li>
+            <li>
+              <a href="#inventory" className={link}>
+                All vehicles
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div>
+          <h2 className="text-xs font-bold tracking-wider text-on-surface uppercase">Good to know</h2>
+          <p className="mt-4 rounded-xl bg-surface-container p-4 text-sm leading-6 text-on-surface-variant ring-1 ring-white/5">
+            Prices are shown in {config.currency}. The pictures on the cards are illustrations of a kind of car, not photographs of the
+            vehicles themselves.
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/5">
+        <p className="mx-auto max-w-7xl px-5 py-5 text-xs text-outline md:px-12">&copy; {new Date().getFullYear()} AutoVault.</p>
       </div>
     </footer>
   );
