@@ -14,6 +14,12 @@ describe("formatPrice", () => {
     expect(formatPrice(amount, { currency: "USD", locale: "en-US" })).toBe(expected);
   });
 
+  it("never goes through a float: digits a float cannot hold survive intact", () => {
+    // A double holds about 15-16 significant digits; this value needs 19. Real prices are far smaller,
+    // so this proves the property rather than a practical case.
+    expect(formatPrice("12345678901234567.89", { currency: "USD", locale: "en-US" })).toBe("$12,345,678,901,234,567.89");
+  });
+
   describe("follows the configured currency and locale", () => {
     it.each([
       ["EUR", "de-DE", "25.000,00 €"],

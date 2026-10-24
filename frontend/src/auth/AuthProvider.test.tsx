@@ -5,7 +5,7 @@ import type { AuthApi } from "../api/auth";
 import { ApiError } from "../api/client";
 import { brokenStorage, expiredToken, freshToken, memoryStorage, NOW, userWithRole } from "../test/helpers";
 import { AuthProvider, useAuth } from "./AuthProvider";
-import { SESSION_KEY } from "./session";
+import { SESSION_KEY, type SessionStorage } from "./session";
 
 /** An auth API that records calls and answers with what the test says. */
 function fakeAuthApi(overrides: Partial<Record<keyof AuthApi, ReturnType<typeof vi.fn>>> = {}) {
@@ -17,16 +17,22 @@ function fakeAuthApi(overrides: Partial<Record<keyof AuthApi, ReturnType<typeof 
   return api;
 }
 
+/**
+ * `stored` is what is in storage when the app starts. `storage` replaces the in-memory storage
+ * entirely, for the case where the browser refuses access. The returned `storage` can be inspected.
+ */
 function setup({
-  storage = memoryStorage(),
+  stored,
+  storage,
   authApi = fakeAuthApi(),
-}: { storage?: ReturnType<typeof memoryStorage> | typeof brokenStorage; authApi?: ReturnType<typeof fakeAuthApi> } = {}) {
+}: { stored?: string; storage?: SessionStorage; authApi?: ReturnType<typeof fakeAuthApi> } = {}) {
+  const memory = memoryStorage(stored === undefined ? {} : { [SESSION_KEY]: stored });
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <AuthProvider authApi={authApi as unknown as AuthApi} storage={storage} now={() => NOW}>
+    <AuthProvider authApi={authApi as unknown as AuthApi} storage={storage ?? memory} now={() => NOW}>
       {children}
     </AuthProvider>
   );
-  return { ...renderHook(() => useAuth(), { wrapper }), storage, authApi };
+  return { ...renderHook(() => useAuth(), { wrapper }), storage: memory, authApi };
 }
 
 const storedSession = (role: "USER" | "ADMIN" = "USER") =>
@@ -43,7 +49,7 @@ describe("AuthProvider", () => {
     });
 
     it("restores a stored session without calling the API", () => {
-      const { result, authApi } = setup({ storage: memoryStorage({ [SESSION_KEY]: storedSession("ADMIN") }) });
+      const { result, authApi } = setup({ stored: storedSession("ADMIN") });
 
       expect(result.current.user).toEqual(userWithRole("ADMIN"));
       expect(result.current.isAdmin).toBe(true);
@@ -53,7 +59,7 @@ describe("AuthProvider", () => {
 
     it("does not restore a session whose token has expired", () => {
       const stored = JSON.stringify({ token: expiredToken(), user: userWithRole() });
-      const { result, storage } = setup({ storage: memoryStorage({ [SESSION_KEY]: stored }) });
+      const { result, storage } = setup({ stored: stored });
 
       expect(result.current.user).toBeNull();
       expect(storage.items.has(SESSION_KEY)).toBe(false);
@@ -139,7 +145,7 @@ describe("AuthProvider", () => {
 
   describe("logout", () => {
     it("forgets the session everywhere", async () => {
-      const { result, storage } = setup({ storage: memoryStorage({ [SESSION_KEY]: storedSession() }) });
+      const { result, storage } = setup({ stored: storedSession() });
 
       act(() => result.current.logout());
 
@@ -149,7 +155,7 @@ describe("AuthProvider", () => {
     });
 
     it("is not reported as an expired session", () => {
-      const { result } = setup({ storage: memoryStorage({ [SESSION_KEY]: storedSession() }) });
+      const { result } = setup({ stored: storedSession() });
 
       act(() => result.current.logout());
 
@@ -159,7 +165,7 @@ describe("AuthProvider", () => {
 
   describe("expireSession, called when the server rejects the token", () => {
     it("signs the user out and says why", () => {
-      const { result, storage } = setup({ storage: memoryStorage({ [SESSION_KEY]: storedSession() }) });
+      const { result, storage } = setup({ stored: storedSession() });
 
       act(() => result.current.expireSession());
 
@@ -177,7 +183,7 @@ describe("AuthProvider", () => {
     });
 
     it("stops mentioning it after the next successful login", async () => {
-      const { result } = setup({ storage: memoryStorage({ [SESSION_KEY]: storedSession() }) });
+      const { result } = setup({ stored: storedSession() });
       act(() => result.current.expireSession());
 
       await act(() => result.current.login("jane@example.com", "Sup3rSecret!"));
