@@ -18,6 +18,11 @@ export function createApp({ authService, vehicleService, tokenService }: AppDepe
   app.disable("x-powered-by");
   app.use(express.json());
 
+  // For the host's health check: needs no login and deliberately does not touch the database.
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok" });
+  });
+
   app.use("/api/auth", createAuthRouter(authService));
   app.use("/api/vehicles", createVehicleRouter(vehicleService, tokenService));
 
