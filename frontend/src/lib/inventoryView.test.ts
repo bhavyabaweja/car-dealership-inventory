@@ -75,10 +75,27 @@ describe("applyView", () => {
     expect(ids(applyView(all, view({ sort: "price-desc" })))).toEqual(["rav4", "camry", "civic", "f150"]);
   });
 
-  it("sorts by stock, most first, keeping the given order among equals", () => {
-    const tied = [vehicle({ id: "a", quantity: 3 }), vehicle({ id: "b", quantity: 9 }), vehicle({ id: "c", quantity: 3 })];
+  it("sorts by name, make then model, ignoring case, keeping the given order among equals", () => {
+    const named = [
+      vehicle({ id: "a", make: "toyota", model: "Camry" }),
+      vehicle({ id: "b", make: "Audi", model: "e-tron GT" }),
+      vehicle({ id: "c", make: "Audi", model: "A4" }),
+      vehicle({ id: "d", make: "Toyota", model: "camry" }),
+    ];
 
-    expect(ids(applyView(tied, view({ sort: "stock-desc" })))).toEqual(["b", "a", "c"]);
+    expect(ids(applyView(named, view({ sort: "name" })))).toEqual(["c", "b", "a", "d"]);
+  });
+
+  it("puts Model 3 before Model 10 when sorting by name: the numbers count as numbers", () => {
+    const models = [vehicle({ id: "ten", model: "Model 10" }), vehicle({ id: "three", model: "Model 3" })];
+
+    expect(ids(applyView(models, view({ sort: "name" })))).toEqual(["three", "ten"]);
+  });
+
+  it("sorts accented names beside their plain spelling, not after Z", () => {
+    const cars = [vehicle({ id: "z", make: "Zagato" }), vehicle({ id: "e", make: "Ébène" }), vehicle({ id: "f", make: "Fiat" })];
+
+    expect(ids(applyView(cars, view({ sort: "name" })))).toEqual(["e", "f", "z"]);
   });
 
   it("keeps the given order among equal prices", () => {

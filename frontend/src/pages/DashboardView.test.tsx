@@ -142,7 +142,7 @@ describe("sorting", () => {
       "Default order",
       "Price: low to high",
       "Price: high to low",
-      "Most in stock",
+      "Name (A to Z)",
     ]);
     expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveValue("default");
   });
@@ -161,12 +161,14 @@ describe("sorting", () => {
     expect(shown()).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
   });
 
-  it("orders by stock, most first", async () => {
+  it("orders by name, make first, and the server's order is still there on Default", async () => {
     openDashboard();
     await screen.findAllByRole("article");
 
-    await chooseSort("Most in stock");
+    await chooseSort("Name (A to Z)");
+    expect(shown()).toEqual(["Honda Civic", "Toyota Camry", "Toyota RAV4"]);
 
+    await chooseSort("Default order");
     expect(shown()).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
   });
 
