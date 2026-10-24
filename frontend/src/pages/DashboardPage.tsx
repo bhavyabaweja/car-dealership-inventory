@@ -11,6 +11,7 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FeaturesStrip } from "../components/FeaturesStrip";
 import { HeroSection } from "../components/HeroSection";
 import { InventoryControls } from "../components/InventoryControls";
+import { PurchaseDialog } from "../components/PurchaseDialog";
 import { RestockDialog } from "../components/RestockDialog";
 import { SearchFilters } from "../components/SearchFilters";
 import { SiteFooter } from "../components/SiteFooter";
@@ -40,7 +41,8 @@ type Panel =
   | { kind: "add" }
   | { kind: "edit"; vehicle: Vehicle }
   | { kind: "restock"; vehicle: Vehicle }
-  | { kind: "delete"; vehicle: Vehicle };
+  | { kind: "delete"; vehicle: Vehicle }
+  | { kind: "purchase"; vehicle: Vehicle };
 
 const nameOf = (vehicle: Vehicle) => `${vehicle.make} ${vehicle.model}`;
 
@@ -54,6 +56,7 @@ export function DashboardPage() {
   const [panel, setPanel] = useState<Panel | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string>();
+  const [purchaseError, setPurchaseError] = useState<string>();
 
   // What is typed, as typed. The search follows it once typing pauses, and the address bar follows the search.
   const [inputs, setInputs] = useState<FilterInputs>(() => filtersFromParams(params));
@@ -86,19 +89,33 @@ export function DashboardPage() {
     });
   }
 
-  async function purchase(vehicle: Vehicle) {
+  /** Purchase on a card opens the order summary; nothing is bought until it is confirmed there. */
+  function startPurchase(vehicle: Vehicle) {
+    if (vehicle.quantity === 0) return;
+    setPurchaseError(undefined);
+    setPanel({ kind: "purchase", vehicle });
+  }
+
+  async function confirmPurchase(vehicle: Vehicle) {
     if (purchasing.has(vehicle.id)) return;
 
-    const name = `${vehicle.make} ${vehicle.model}`;
+    const name = nameOf(vehicle);
+    setPurchaseError(undefined);
     setBusy(vehicle.id, true);
     try {
       // The server answers with the vehicle as it now is, so the card shows the real stock, not a guess.
       replace(await api.purchase(vehicle.id));
+      closePanel();
       toast.success(`Purchased ${name}.`);
     } catch (failure) {
-      toast.error(`${name}: ${messageFor(failure)}`);
-      // Someone else bought it first, or it was removed: what is on screen is stale, so refresh it.
-      if (failure instanceof ApiError && STALE_LIST_CODES.has(failure.code)) reload();
+      if (failure instanceof ApiError && STALE_LIST_CODES.has(failure.code)) {
+        // Someone else bought it first, or it was removed: what is on screen is stale, so say so and refresh it.
+        closePanel();
+        toast.error(`${name}: ${messageFor(failure)}`);
+        reload();
+      } else {
+        setPurchaseError(messageFor(failure)); // in the dialog, where the person is looking, ready for another try
+      }
     } finally {
       setBusy(vehicle.id, false);
     }
@@ -107,6 +124,7 @@ export function DashboardPage() {
   function closePanel() {
     setPanel(null);
     setDeleteError(undefined);
+    setPurchaseError(undefined);
   }
 
   /**
@@ -254,7 +272,7 @@ export function DashboardPage() {
                     {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
                     <VehicleCard
                       vehicle={vehicle}
-                      onPurchase={isAdmin ? undefined : purchase}
+                      onPurchase={isAdmin ? undefined : startPurchase}
                       purchasing={purchasing.has(vehicle.id)}
                       admin={adminActions}
                     />
@@ -303,6 +321,15 @@ export function DashboardPage() {
             closePanel();
             toast.success(`Restocked ${nameOf(restocked)}: ${restocked.quantity} in stock.`);
           }}
+        />
+      )}
+      {panel?.kind === "purchase" && (
+        <PurchaseDialog
+          vehicle={panel.vehicle}
+          busy={purchasing.has(panel.vehicle.id)}
+          error={purchaseError}
+          onConfirm={() => confirmPurchase(panel.vehicle)}
+          onCancel={closePanel}
         />
       )}
       {panel?.kind === "delete" && (

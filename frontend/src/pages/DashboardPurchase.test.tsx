@@ -89,6 +89,20 @@ describe("placing the order", () => {
     expect(await screen.findByText("Purchased Toyota Camry.")).toBeInTheDocument();
   });
 
+  it("buys the vehicle that was chosen, not just the first in the list", async () => {
+    const { api } = openDashboard();
+    api.purchase.mockResolvedValue(vehicle({ id: "v-rav4", model: "RAV4", category: "SUV", price: "32000.50", quantity: 1 }));
+    await openPurchase("Toyota RAV4");
+    expect(dialog().getByText("Toyota RAV4")).toBeInTheDocument();
+
+    await user().click(dialog().getByRole("button", { name: "Confirm order" }));
+
+    await waitFor(() => expect(api.purchase).toHaveBeenCalledWith("v-rav4"));
+    expect(api.purchase).toHaveBeenCalledTimes(1);
+    expect((await cardOf("Toyota RAV4")).getByText("Only 1 left")).toBeInTheDocument();
+    expect((await cardOf("Toyota Camry")).getByText("5 in stock")).toBeInTheDocument();
+  });
+
   it("shows that it is working, cannot be sent twice and cannot be dismissed meanwhile", async () => {
     const { api } = openDashboard();
     let finish!: (v: Vehicle) => void;
