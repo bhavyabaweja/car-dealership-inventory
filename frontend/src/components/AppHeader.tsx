@@ -20,8 +20,8 @@ export function AppHeader() {
           <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-secondary-container to-primary-container text-white shadow-glow">
             <Car className="size-5" aria-hidden="true" />
           </span>
-          <BrandMark className="hidden min-[400px]:inline" />
-          <span className="sr-only min-[400px]:hidden">AutoVault</span>
+          <BrandMark className="hidden min-[360px]:inline" />
+          <span className="sr-only min-[360px]:hidden">AutoVault</span>
         </a>
 
         <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">

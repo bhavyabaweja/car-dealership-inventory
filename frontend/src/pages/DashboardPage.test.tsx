@@ -97,7 +97,7 @@ describe("the vehicle list", () => {
   it("keeps the order the server gave", async () => {
     openDashboard();
 
-    const names = (await screen.findAllByRole("heading", { level: 2 })).map((heading) => heading.textContent);
+    const names = (await screen.findAllByRole("article")).map((card) => within(card).getByRole("heading").textContent);
 
     expect(names).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
   });

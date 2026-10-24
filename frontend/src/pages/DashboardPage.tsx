@@ -8,9 +8,12 @@ import { useAuth } from "../auth/AuthProvider";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { FeaturesStrip } from "../components/FeaturesStrip";
+import { HeroSection } from "../components/HeroSection";
 import { InventoryControls } from "../components/InventoryControls";
 import { RestockDialog } from "../components/RestockDialog";
 import { SearchFilters } from "../components/SearchFilters";
+import { SiteFooter } from "../components/SiteFooter";
 import { useToast } from "../components/Toasts";
 import { VehicleCard, VehicleCardSkeleton } from "../components/VehicleCard";
 import { VehicleFormDialog } from "../components/VehicleFormDialog";
@@ -27,7 +30,10 @@ const STALE_LIST_CODES = new Set(["INSUFFICIENT_STOCK", "VEHICLE_NOT_FOUND"]);
 /** How long typing must pause before the search is made. */
 const SEARCH_PAUSE_MS = 300;
 
-const grid = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
+// Four across only where there is room for an administrator's three buttons on a card (see VehicleCard).
+const grid = "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 min-[1360px]:grid-cols-4";
+
+const emptyPanel = "rounded-2xl border border-dashed border-white/15 bg-surface-container/60 p-10 text-center";
 
 /** The dialog that is open, if any, with the vehicle it is about. */
 type Panel =
@@ -147,23 +153,10 @@ export function DashboardPage() {
     : undefined;
 
   return (
-    <>
+    <div id="top">
       <AppHeader />
-      <main className="mx-auto max-w-6xl px-4 pt-6 pb-[max(4rem,env(safe-area-inset-bottom))] sm:pt-8">
-        <div className="flex items-center justify-between gap-3">
-          {/* Where focus lands when a dialog's own opener is gone (see Dialog). */}
-          <h1 tabIndex={-1} data-focus-fallback className="text-2xl font-semibold tracking-tight text-slate-900 focus:outline-none">
-            Vehicles
-          </h1>
-          {isAdmin && (
-            <Button onClick={() => setPanel({ kind: "add" })}>
-              <Plus className="size-4" aria-hidden="true" />
-              Add vehicle
-            </Button>
-          )}
-        </div>
-
-        <div className="mt-4">
+      <main>
+        <HeroSection>
           <SearchFilters
             values={inputs}
             errors={errors}
@@ -171,86 +164,110 @@ export function DashboardPage() {
             onChange={(field, value) => setInputs((current) => ({ ...current, [field]: value }))}
             onClear={clearFilters}
           />
-        </div>
+        </HeroSection>
 
-        <p aria-live="polite" className="mt-4 min-h-5 text-sm text-slate-600">
-          {status === "ready" && visible.length > 0 && `${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}
-        </p>
-
-        {status === "ready" && vehicles.length > 0 && (
-          <div className="mt-2">
-            <InventoryControls tabs={tabs} total={tabs.reduce((sum, tab) => sum + tab.count, 0)} view={{ ...view, category }} onChange={setView} />
+        <section id="inventory" aria-labelledby="inventory-title" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-10 md:px-12">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              {/* Where focus lands when a dialog's own opener is gone (see Dialog). */}
+              <h2
+                id="inventory-title"
+                tabIndex={-1}
+                data-focus-fallback
+                className="font-display text-3xl font-bold tracking-tight text-on-surface focus:outline-none"
+              >
+                Vehicles
+              </h2>
+              <p aria-live="polite" className="mt-1 min-h-5 text-sm text-outline">
+                {status === "ready" && visible.length > 0 && `${visible.length} ${visible.length === 1 ? "vehicle" : "vehicles"}`}
+              </p>
+            </div>
+            {isAdmin && (
+              <Button onClick={() => setPanel({ kind: "add" })}>
+                <Plus className="size-4" aria-hidden="true" />
+                Add vehicle
+              </Button>
+            )}
           </div>
-        )}
 
-        <div className="mt-2">
-          {status === "loading" && (
-            <div role="status">
-              <span className="sr-only">Loading vehicles…</span>
-              <div className={grid}>
-                {[0, 1, 2, 3, 4, 5].map((slot) => (
-                  <VehicleCardSkeleton key={slot} />
-                ))}
+          {status === "ready" && vehicles.length > 0 && (
+            <div className="-mx-5 mt-4 bg-background/90 px-5 py-3 backdrop-blur md:sticky md:top-20 md:z-20 md:-mx-12 md:px-12">
+              <InventoryControls tabs={tabs} total={tabs.reduce((sum, tab) => sum + tab.count, 0)} view={{ ...view, category }} onChange={setView} />
+            </div>
+          )}
+
+          <div className="mt-4">
+            {status === "loading" && (
+              <div role="status">
+                <span className="sr-only">Loading vehicles…</span>
+                <div className={grid}>
+                  {[0, 1, 2, 3, 4, 5].map((slot) => (
+                    <VehicleCardSkeleton key={slot} />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {status === "error" && (
-            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-              <p className="font-semibold text-red-900">We couldn't load the vehicles</p>
-              <p className="mt-1 text-sm text-red-800">{error}</p>
-              <Button variant="secondary" className="mt-4" onClick={reload}>
-                Try again
-              </Button>
-            </div>
-          )}
+            {status === "error" && (
+              <div role="alert" className="rounded-2xl border border-red-400/30 bg-red-950/40 p-6 text-center">
+                <p className="font-semibold text-on-error-container">We couldn't load the vehicles</p>
+                <p className="mt-1 text-sm text-error">{error}</p>
+                <Button variant="secondary" className="mt-4" onClick={reload}>
+                  Try again
+                </Button>
+              </div>
+            )}
 
-          {status === "ready" && vehicles.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              {searching ? (
-                <>
-                  <p className="font-medium text-slate-900">No vehicles match your search.</p>
-                  <p className="mt-1 text-sm text-slate-600">Try different words or a wider price range.</p>
-                  <Button variant="secondary" className="mt-4" onClick={clearFilters}>
-                    Show all vehicles
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium text-slate-900">No vehicles available yet.</p>
-                  <p className="mt-1 text-sm text-slate-600">Check back soon.</p>
-                </>
-              )}
-            </div>
-          )}
+            {status === "ready" && vehicles.length === 0 && (
+              <div className={emptyPanel}>
+                {searching ? (
+                  <>
+                    <p className="font-display text-lg font-semibold text-on-surface">No vehicles match your search.</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">Try different words or a wider price range.</p>
+                    <Button variant="secondary" className="mt-4" onClick={clearFilters}>
+                      Show all vehicles
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-display text-lg font-semibold text-on-surface">No vehicles available yet.</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">Check back soon.</p>
+                  </>
+                )}
+              </div>
+            )}
 
-          {status === "ready" && vehicles.length > 0 && visible.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <p className="font-medium text-slate-900">No vehicles in this view.</p>
-              <p className="mt-1 text-sm text-slate-600">Try another category, or turn off "In stock only".</p>
-              <Button variant="secondary" className="mt-4" onClick={() => setView(defaultView)}>
-                Show everything
-              </Button>
-            </div>
-          )}
+            {status === "ready" && vehicles.length > 0 && visible.length === 0 && (
+              <div className={emptyPanel}>
+                <p className="font-display text-lg font-semibold text-on-surface">No vehicles in this view.</p>
+                <p className="mt-1 text-sm text-on-surface-variant">Try another category, or turn off "In stock only".</p>
+                <Button variant="secondary" className="mt-4" onClick={() => setView(defaultView)}>
+                  Show everything
+                </Button>
+              </div>
+            )}
 
-          {status === "ready" && visible.length > 0 && (
-            <ul className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
-              {visible.map((vehicle) => (
-                <li key={vehicle.id}>
-                  {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
-                  <VehicleCard
-                    vehicle={vehicle}
-                    onPurchase={isAdmin ? undefined : purchase}
-                    purchasing={purchasing.has(vehicle.id)}
-                    admin={adminActions}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            {status === "ready" && visible.length > 0 && (
+              <ul aria-labelledby="inventory-title" className={`${grid} transition-opacity ${isFetching ? "opacity-60" : ""}`} aria-busy={isFetching}>
+                {visible.map((vehicle) => (
+                  <li key={vehicle.id}>
+                    {/* An administrator's dashboard is for managing the inventory, so it offers no purchase. */}
+                    <VehicleCard
+                      vehicle={vehicle}
+                      onPurchase={isAdmin ? undefined : purchase}
+                      purchasing={purchasing.has(vehicle.id)}
+                      admin={adminActions}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <FeaturesStrip />
       </main>
+      <SiteFooter />
 
       {/* Each dialog exists only while open, so it always starts fresh. */}
       {panel?.kind === "add" && (
@@ -300,6 +317,6 @@ export function DashboardPage() {
           onCancel={closePanel}
         />
       )}
-    </>
+    </div>
   );
 }

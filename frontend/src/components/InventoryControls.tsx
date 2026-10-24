@@ -30,8 +30,13 @@ export function InventoryControls({ tabs, total, view, onChange }: InventoryCont
   const set = (changes: Partial<InventoryView>) => onChange({ ...view, ...changes });
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div role="group" aria-label="Browse by category" className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 md:pb-0">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+      {/* Scrolls sideways when the tabs outgrow the row; the scrollbar itself is hidden, the tabs are still reachable by touch, trackpad and Tab. */}
+      <div
+        role="group"
+        aria-label="Browse by category"
+        className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <button type="button" aria-pressed={view.category === null} onClick={() => set({ category: null })} className={tabClasses(view.category === null)}>
           <span>All inventory</span>{" "}
           <span className={countClasses(view.category === null)}>{total}</span>
@@ -47,8 +52,8 @@ export function InventoryControls({ tabs, total, view, onChange }: InventoryCont
         })}
       </div>
 
-      <div className="flex items-center justify-between gap-5 md:justify-end">
-        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-on-surface-variant select-none">
+      <div className="flex shrink-0 items-center justify-between gap-5 lg:justify-end">
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm whitespace-nowrap text-on-surface-variant select-none">
           <span>In stock only</span>
           <input
             type="checkbox"

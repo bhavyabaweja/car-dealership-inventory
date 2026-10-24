@@ -176,13 +176,13 @@ describe("searching the vehicles", () => {
 
     await type("Make", "h");
 
-    const list = screen.getByRole("list");
+    const list = screen.getByRole("list", { name: "Vehicles" });
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
     expect(screen.getAllByRole("article")).toHaveLength(3);
 
     finish([vehicle({ id: "v-civic", make: "Honda", model: "Civic" })]);
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(1));
-    expect(screen.getByRole("list")).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByRole("list", { name: "Vehicles" })).toHaveAttribute("aria-busy", "false");
   });
 
   it("keeps the search fields when a search fails, and Try again repeats that search", async () => {

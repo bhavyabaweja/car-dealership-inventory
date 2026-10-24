@@ -30,7 +30,10 @@ export function SearchFilters({ values, errors, activeCount, onChange, onClear }
   const priceField = (name: "minPrice" | "maxPrice") => ({ ...field(name), inputMode: "decimal" as const, error: errors[name] });
 
   return (
-    <section aria-label="Search and filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section
+      aria-label="Search and filters"
+      className="rounded-xl bg-surface-container-high/90 p-4 shadow-xl ring-1 ring-white/8 backdrop-blur-xl md:p-6"
+    >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <TextField label="Make" {...field("make")} />
         <TextField label="Model" {...field("model")} />
@@ -55,7 +58,7 @@ export function SearchFilters({ values, errors, activeCount, onChange, onClear }
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filters
           {activeCount > 0 && (
-            <span className="rounded-full bg-indigo-600 px-1.5 text-xs leading-5 font-semibold text-white">{activeCount}</span>
+            <span className="rounded-full bg-primary-container px-1.5 text-xs leading-5 font-bold text-on-primary-container">{activeCount}</span>
           )}
         </Button>
         {activeCount > 0 && (
