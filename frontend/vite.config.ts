@@ -2,8 +2,9 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-// The browser talks to the API through the dev server, so it sees a single origin and CORS never
-// comes into it. Production needs the same arrangement (or CORS enabled on the API).
+// In development the browser talks to the API through the dev server, so it sees a single origin and CORS never
+// comes into it. In production the page (Vercel) and the API (Render) are different origins: the build is given the
+// API's address in VITE_API_URL and the API lists the page's origin in CORS_ORIGIN (see DEPLOYMENT.md).
 const apiProxy = { "/api": "http://localhost:3000" };
 
 export default defineConfig({

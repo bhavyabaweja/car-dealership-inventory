@@ -17,9 +17,15 @@ const tokenService = new JwtTokenService(config.jwtSecret, config.jwtExpiresIn);
 const authService = new AuthService(new PrismaUserRepository(prisma), new BcryptPasswordHasher(), tokenService);
 const vehicleService = new VehicleService(new PrismaVehicleRepository(prisma));
 
-const server = createApp({ authService, vehicleService, tokenService }).listen(config.port, () => {
-  console.log(`API listening on http://localhost:${config.port}`);
+const app = createApp({ authService, vehicleService, tokenService, corsOrigins: config.corsOrigins });
+// Hosts such as Render set PORT and route traffic to it; listening without a host binds every interface, as they need.
+const server = app.listen(config.port, () => {
+  console.log(`API listening on port ${config.port}`);
 });
+// A proxy in front of the API reuses its connections for longer than Node's 5 second keep-alive default; when Node closes
+// one first, the proxy's next request on it fails as a sporadic 502. The header timeout must stay above this one.
+server.keepAliveTimeout = 120_000;
+server.headersTimeout = 125_000;
 
 function shutdown(): void {
   server.close(() => {
