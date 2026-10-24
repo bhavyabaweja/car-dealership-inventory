@@ -13,6 +13,7 @@ describe("loadConfig", () => {
       port: 3000,
       jwtSecret: valid.JWT_SECRET,
       jwtExpiresIn: "1h",
+      corsOrigins: [],
     });
   });
 
@@ -20,6 +21,35 @@ describe("loadConfig", () => {
     expect(loadConfig({ ...valid, PORT: "8080", JWT_EXPIRES_IN: "30m" })).toMatchObject({
       port: 8080,
       jwtExpiresIn: "30m",
+    });
+  });
+
+  describe("CORS_ORIGIN, the sites allowed to call the API from a browser", () => {
+    it("is a comma-separated list; spaces, empty entries and trailing slashes are tidied away", () => {
+      const env = { ...valid, CORS_ORIGIN: " https://car-dealership.vercel.app/ ,http://localhost:5173,, " };
+
+      expect(loadConfig(env).corsOrigins).toEqual(["https://car-dealership.vercel.app", "http://localhost:5173"]);
+    });
+
+    it("counts a blank value as unset, as an empty line in a .env file or a blank dashboard field gives", () => {
+      expect(loadConfig({ ...valid, CORS_ORIGIN: "  " }).corsOrigins).toEqual([]);
+    });
+
+    it("lists each origin once", () => {
+      const env = { ...valid, CORS_ORIGIN: "https://a.example,https://a.example/" };
+
+      expect(loadConfig(env).corsOrigins).toEqual(["https://a.example"]);
+    });
+
+    it.each([
+      ["a wildcard (the allow-list is the point)", "*"],
+      ["a host with no scheme, which a browser would never send", "car-dealership.vercel.app"],
+      ["a page address rather than an origin", "https://car-dealership.vercel.app/login"],
+      ["an address with a query", "https://car-dealership.vercel.app?x=1"],
+      ["a scheme that is not http or https", "ftp://car-dealership.vercel.app"],
+      ["one bad entry among good ones", "https://a.example,nonsense"],
+    ])("fails fast and names the setting for %s", (_label, value) => {
+      expect(() => loadConfig({ ...valid, CORS_ORIGIN: value })).toThrow(/CORS_ORIGIN/);
     });
   });
 
