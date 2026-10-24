@@ -4,8 +4,20 @@ import { ApiError, createApiClient } from "./client";
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
+/** The ApiError a request fails with. Fails the test if the request unexpectedly succeeds. */
+const failure = (request: Promise<unknown>): Promise<ApiError> =>
+  request.then(
+    () => {
+      throw new Error("expected the request to fail, but it succeeded");
+    },
+    (error: ApiError) => error,
+  );
+
 /** A client wired to a fake fetch; `respond` decides what the "server" answers. */
-function setup({ token = null as string | null, respond = () => json(200, {}) as () => Response | Promise<Response> } = {}) {
+function setup({
+  token = null,
+  respond = () => json(200, {}),
+}: { token?: string | null; respond?: () => Response | Promise<Response> } = {}) {
   const fetchImpl = vi.fn<typeof fetch>(async () => respond());
   const onUnauthorized = vi.fn();
   const client = createApiClient({ baseUrl: "", getToken: () => token, onUnauthorized, fetchImpl });
@@ -124,7 +136,7 @@ describe("errors", () => {
     };
     const { client } = setup({ respond: () => json(400, body) });
 
-    const error = await client.request("POST", "/vehicles", { body: {} }).catch((e) => e);
+    const error = await failure(client.request("POST", "/vehicles", { body: {} }));
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({
@@ -138,7 +150,7 @@ describe("errors", () => {
   it("gives an error without details an empty details list, so callers never check for undefined", async () => {
     const { client } = setup({ respond: () => json(409, { error: { code: "INSUFFICIENT_STOCK", message: "Only 0 left in stock" } }) });
 
-    const error = await client.request("POST", "/vehicles/1/purchase").catch((e) => e);
+    const error = await failure(client.request("POST", "/vehicles/1/purchase"));
 
     expect(error.details).toEqual([]);
   });
@@ -149,7 +161,7 @@ describe("errors", () => {
     });
     const client = createApiClient({ baseUrl: "", getToken: () => null, onUnauthorized: vi.fn(), fetchImpl });
 
-    const error = await client.request("GET", "/vehicles").catch((e) => e);
+    const error = await failure(client.request("GET", "/vehicles"));
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 0, code: "NETWORK_ERROR" });
@@ -162,7 +174,7 @@ describe("errors", () => {
   ])("describes a %s answer that is not JSON, such as a proxy's error page, as %s", async (status, code, message) => {
     const { client } = setup({ respond: () => new Response("<html>Bad Gateway</html>", { status }) });
 
-    const error = await client.request("GET", "/vehicles").catch((e) => e);
+    const error = await failure(client.request("GET", "/vehicles"));
 
     expect(error).toMatchObject({ status, code });
     expect(error.message).toMatch(message);
@@ -187,7 +199,7 @@ describe("expired or rejected sessions", () => {
       respond: () => json(401, { error: { code: "TOKEN_EXPIRED", message: "Token expired" } }),
     });
 
-    const error = await client.request("GET", "/vehicles").catch((e) => e);
+    const error = await failure(client.request("GET", "/vehicles"));
 
     expect(onUnauthorized).toHaveBeenCalledOnce();
     expect(error).toMatchObject({ status: 401, code: "TOKEN_EXPIRED" }); // the caller still sees the failure
