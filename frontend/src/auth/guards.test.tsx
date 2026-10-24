@@ -74,6 +74,7 @@ describe("GuestOnly", () => {
     it.each([
       ["another site", "https://evil.example/phish"],
       ["a protocol-relative address", "//evil.example"],
+      ["a slash then a backslash, which browsers read like two slashes", "/\\evil.example"],
       ["a script", "javascript:alert(1)"],
       ["something that is not a path", "dashboard"],
       ["something that is not text", 42],

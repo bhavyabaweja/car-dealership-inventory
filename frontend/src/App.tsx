@@ -1,8 +1,28 @@
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { AuthProvider } from "./auth/AuthProvider";
+import { GuestOnly, RequireAuth } from "./auth/guards";
+import { DashboardPage } from "./pages/DashboardPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+
+/** Every screen of the app and who may see it. Separate from App so tests can mount it in any router. */
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
+      <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
+      <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
 export function App() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Car Dealership</h1>
-      <p className="mt-2 text-slate-600">The frontend is running. Screens arrive in the next steps.</p>
-    </main>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

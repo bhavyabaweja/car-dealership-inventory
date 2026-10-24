@@ -9,7 +9,8 @@ import { fakeAuthApi, memoryStorage, NOW } from "./helpers";
 /** Shows the current location so tests can check where a redirect ended up. */
 function LocationProbe() {
   const { pathname, search } = useLocation();
-  return <output data-testid="location">{pathname + search}</output>;
+  // A plain element: <output> has the ARIA role "status", which would confuse tests that look for real status messages.
+  return <div data-testid="location">{pathname + search}</div>;
 }
 
 /**
