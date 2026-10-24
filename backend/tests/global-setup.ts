@@ -29,8 +29,12 @@ function assertSafeTestDatabase(url: string): void {
 /** Applies pending migrations to the test database, and explains what to do if that cannot happen. */
 function migrate(databaseUrl: string): void {
   try {
-    // Never touches the development database: DATABASE_URL is overridden for this command only.
-    execSync("npx prisma migrate deploy", { stdio: "pipe", env: { ...process.env, DATABASE_URL: databaseUrl } });
+    // Never touches the development database: both URLs the Prisma CLI may use are overridden for this command only
+    // (prisma.config.ts prefers DIRECT_URL, which a developer's .env could point at a real database).
+    execSync("npx prisma migrate deploy", {
+      stdio: "pipe",
+      env: { ...process.env, DATABASE_URL: databaseUrl, DIRECT_URL: databaseUrl },
+    });
   } catch (error) {
     const { stdout, stderr } = error as { stdout?: Buffer; stderr?: Buffer };
     const reason = (
