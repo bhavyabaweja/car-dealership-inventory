@@ -4,7 +4,7 @@ import type { Vehicle } from "../api/types";
  * How the vehicles already on screen are narrowed and ordered. This is a view of the loaded results,
  * apart from the search, which asks the server.
  */
-export type SortKey = "default" | "price-asc" | "price-desc" | "stock-desc";
+export type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
 export interface InventoryView {
   /** A category key (see categoryTabs), or null for all of them. */
@@ -24,6 +24,7 @@ export interface CategoryTab {
 }
 
 const keyOf = (category: string) => category.trim().toLowerCase();
+const nameOf = ({ make, model }: Vehicle) => `${make} ${model}`;
 
 /**
  * One tab per category, the biggest first and alphabetical among equals. Spellings that differ only in
@@ -56,8 +57,9 @@ export function applyView(vehicles: readonly Vehicle[], { category, inStockOnly,
       return kept.sort((a, b) => Number(a.price) - Number(b.price));
     case "price-desc":
       return kept.sort((a, b) => Number(b.price) - Number(a.price));
-    case "stock-desc":
-      return kept.sort((a, b) => b.quantity - a.quantity);
+    case "name":
+      // Numbers count as numbers ("Model 3" before "Model 10"), and "base" ignores case and accents.
+      return kept.sort((a, b) => nameOf(a).localeCompare(nameOf(b), undefined, { numeric: true, sensitivity: "base" }));
     default:
       return kept;
   }

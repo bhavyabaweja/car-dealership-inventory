@@ -4,7 +4,7 @@ const SORT_OPTIONS: ReadonlyArray<[SortKey, string]> = [
   ["default", "Default order"],
   ["price-asc", "Price: low to high"],
   ["price-desc", "Price: high to low"],
-  ["stock-desc", "Most in stock"],
+  ["name", "Name (A to Z)"],
 ];
 
 interface InventoryControlsProps {
