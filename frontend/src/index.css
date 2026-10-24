@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    min-height: 100dvh;
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /* Below 16px, iOS Safari zooms the page when a field gets focus. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
