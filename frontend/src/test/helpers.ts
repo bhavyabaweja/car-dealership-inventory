@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+import type { AuthApi } from "../api/auth";
 import type { Role, User } from "../api/types";
 
 /** A fixed "now" for tests, in milliseconds. */
@@ -41,3 +43,14 @@ export const brokenStorage = {
     throw new DOMException("denied", "SecurityError");
   },
 };
+
+/** What the session helpers store for a signed-in user, as JSON. */
+export const storedSession = (role: Role = "USER") => JSON.stringify({ token: freshToken(), user: userWithRole(role) });
+
+/** An auth API that records calls and answers with a USER by default; tests change the answers per case. */
+export function fakeAuthApi() {
+  return {
+    login: vi.fn(async (_email: string, _password: string) => ({ token: freshToken(), user: userWithRole("USER") })),
+    register: vi.fn(async (_email: string, _password: string) => userWithRole("USER")),
+  } satisfies Record<keyof AuthApi, unknown>;
+}

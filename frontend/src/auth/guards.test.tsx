@@ -13,16 +13,21 @@ function LoginPage() {
   return <p>login page (from: {String((location.state as { from?: string } | null)?.from ?? "nowhere")})</p>;
 }
 
-function renderApp(path: string, { signedIn }: { signedIn: boolean }) {
+function Dashboard() {
+  const { search } = useLocation();
+  return <p>dashboard {search}</p>;
+}
+
+function renderApp(path: string, { signedIn, state }: { signedIn: boolean; state?: unknown }) {
   const storage = memoryStorage(
     signedIn ? { [SESSION_KEY]: JSON.stringify({ token: freshToken(), user: userWithRole() }) } : {},
   );
   const authApi = { login: vi.fn(), register: vi.fn() } as unknown as AuthApi;
   return render(
     <AuthProvider authApi={authApi} storage={storage} now={() => NOW}>
-      <MemoryRouter initialEntries={[path]}>
+      <MemoryRouter initialEntries={[{ pathname: new URL(path, "http://localhost").pathname, search: new URL(path, "http://localhost").search, state }]}>
         <Routes>
-          <Route path="/" element={<RequireAuth><p>dashboard</p></RequireAuth>} />
+          <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
         </Routes>
       </MemoryRouter>
@@ -57,5 +62,25 @@ describe("GuestOnly", () => {
 
     expect(screen.queryByText(/login page/)).not.toBeInTheDocument();
     expect(screen.getByText("dashboard")).toBeInTheDocument();
+  });
+
+  describe("after signing in, returns the person to the page they were headed for", () => {
+    it("including its query", () => {
+      renderApp("/login", { signedIn: true, state: { from: "/?make=toyota" } });
+
+      expect(screen.getByText("dashboard ?make=toyota")).toBeInTheDocument();
+    });
+
+    it.each([
+      ["another site", "https://evil.example/phish"],
+      ["a protocol-relative address", "//evil.example"],
+      ["a script", "javascript:alert(1)"],
+      ["something that is not a path", "dashboard"],
+      ["something that is not text", 42],
+    ])("but never to %s", (_label, from) => {
+      renderApp("/login", { signedIn: true, state: { from } });
+
+      expect(screen.getByText("dashboard")).toBeInTheDocument();
+    });
   });
 });

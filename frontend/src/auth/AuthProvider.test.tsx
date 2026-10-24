@@ -3,19 +3,9 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthApi } from "../api/auth";
 import { ApiError } from "../api/client";
-import { brokenStorage, expiredToken, freshToken, memoryStorage, NOW, userWithRole } from "../test/helpers";
+import { brokenStorage, expiredToken, fakeAuthApi, freshToken, memoryStorage, NOW, storedSession, userWithRole } from "../test/helpers";
 import { AuthProvider, useAuth } from "./AuthProvider";
 import { SESSION_KEY, type SessionStorage } from "./session";
-
-/** An auth API that records calls and answers with what the test says. */
-function fakeAuthApi(overrides: Partial<Record<keyof AuthApi, ReturnType<typeof vi.fn>>> = {}) {
-  const api = {
-    login: vi.fn(async () => ({ token: freshToken(), user: userWithRole("USER") })),
-    register: vi.fn(async () => userWithRole("USER")),
-    ...overrides,
-  };
-  return api;
-}
 
 /**
  * `stored` is what is in storage when the app starts. `storage` replaces the in-memory storage
@@ -34,9 +24,6 @@ function setup({
   );
   return { ...renderHook(() => useAuth(), { wrapper }), storage: memory, authApi };
 }
-
-const storedSession = (role: "USER" | "ADMIN" = "USER") =>
-  JSON.stringify({ token: freshToken(), user: userWithRole(role) });
 
 describe("AuthProvider", () => {
   describe("starting up", () => {
