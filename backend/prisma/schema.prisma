@@ -15,6 +15,19 @@ enum Role {
   ADMIN
 }
 
+model Vehicle {
+  id        String   @id @default(uuid())
+  make      String
+  model     String
+  category  String
+  /// Exact decimal money, never a float. Must be positive (Vehicle_price_positive).
+  price     Decimal  @db.Decimal(10, 2)
+  /// Never negative (Vehicle_quantity_non_negative). Changed only through atomic increments.
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id           String   @id @default(uuid())
   /// Always stored lowercase; see the User_email_is_lowercase check in the create_user migration.

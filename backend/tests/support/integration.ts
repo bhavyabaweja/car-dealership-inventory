@@ -16,10 +16,10 @@ export const tokens = new JwtTokenService(TEST_JWT_SECRET);
 export const authService = new AuthService(users, hasher, tokens);
 export const app = createApp({ authService });
 
-/** Call once at the top of a test file: empties the users table before each test, disconnects at the end. */
+/** Call once at the top of a test file: empties every table before each test, disconnects at the end. */
 export function useCleanDatabase(): void {
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe('TRUNCATE TABLE "User"');
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "User", "Vehicle"');
   });
 
   afterAll(async () => {

@@ -73,11 +73,16 @@ describe("PrismaVehicleRepository.findAll", () => {
       expect(names(await vehicles.findAll({ category: "suv" }))).toEqual(["BMW X5", "Toyota RAV4"]);
     });
 
-    it("treat % and _ as ordinary characters, not wildcards", async () => {
+    it("treat %, _ and \\ as ordinary characters, not wildcards or escapes", async () => {
       await seedCatalog();
+      await vehicles.create({ ...camry, make: "Pct%", model: "Under_score", category: "Back\\slash" });
+      const special = ["Pct% Under_score"];
 
-      expect(await vehicles.findAll({ make: "%" })).toEqual([]);
-      expect(await vehicles.findAll({ model: "_" })).toEqual([]);
+      // As wildcards, "%" and "_" would match every vehicle; they must match only the one containing them.
+      expect(names(await vehicles.findAll({ make: "%" }))).toEqual(special);
+      expect(names(await vehicles.findAll({ model: "_" }))).toEqual(special);
+      // An unescaped "\" would escape the closing wildcard and stop matching a literal backslash.
+      expect(names(await vehicles.findAll({ category: "\\" }))).toEqual(special);
     });
 
     it("include both ends of a price range", async () => {
