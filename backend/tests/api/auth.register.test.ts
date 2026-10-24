@@ -1,6 +1,5 @@
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp } from "../../src/app";
 import { buildTestApp } from "../support/build-test-app";
 
 const buildApp = buildTestApp;
@@ -101,7 +100,7 @@ describe("app-wide behaviour", () => {
     const failure = async () => {
       throw new Error("connect ECONNREFUSED db:5432 password=hunter2");
     };
-    const app = createApp({ authService: { register: failure, login: failure } });
+    const { app } = buildApp({ authService: { register: failure, login: failure } });
 
     const response = await request(app).post("/api/auth/register").send({ email: "jane@example.com", password: "Sup3rSecret!" });
 

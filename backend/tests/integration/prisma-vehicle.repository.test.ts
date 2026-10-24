@@ -129,6 +129,14 @@ describe("PrismaVehicleRepository.update", () => {
   it("returns null for a vehicle that does not exist", async () => {
     expect(await vehicles.update("no-such-id", { make: "Ford" })).toBeNull();
   });
+
+  it("reports a database failure as an error, not as a missing vehicle", async () => {
+    const { id } = await vehicles.create(camry);
+
+    // Violates the positive-price CHECK constraint; the vehicle exists, so null would be a lie.
+    await expect(vehicles.update(id, { price: "0" })).rejects.toThrow();
+    expect((await vehicles.findAll())[0]?.price).toBe("25000.00");
+  });
 });
 
 describe("PrismaVehicleRepository.remove", () => {
