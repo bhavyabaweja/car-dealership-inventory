@@ -2,17 +2,6 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "./AuthProvider";
 
-/** Only for signed-in users. Anyone else goes to the login page, which sends them back here afterwards. */
-export function RequireAuth({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const location = useLocation();
-
-  if (!user) {
-    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
-  }
-  return children;
-}
-
 /** A path inside this app: starts with one slash, not two (or a slash and a backslash), which browsers read as another site. */
 const APP_PATH = /^\/(?![/\\])\S*$/;
 

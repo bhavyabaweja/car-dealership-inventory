@@ -1,4 +1,5 @@
 import { CarFront } from "lucide-react";
+import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { config } from "../config";
 import type { CategoryTab } from "../lib/inventoryView";
@@ -10,15 +11,15 @@ const heading = "font-display text-sm font-semibold tracking-wider text-white up
 
 interface SiteFooterProps {
   /** Whether the page has a categories section to link to. */
-  hasCategories: boolean;
-  /** The categories the vehicles on screen have, to link to. */
-  categories: CategoryTab[];
-  onChooseCategory: (key: string) => void;
+  hasCategories?: boolean;
+  /** The categories the vehicles on screen have, to link to. A visitor, who is shown no vehicles, has none. */
+  categories?: CategoryTab[];
+  onChooseCategory?: (key: string) => void;
 }
 
 /** The foot of the page. Only things that are true: where to go, who is signed in, and how prices and pictures should be read. */
-export function SiteFooter({ hasCategories, categories, onChooseCategory }: SiteFooterProps) {
-  const { isAdmin } = useAuth();
+export function SiteFooter({ hasCategories = false, categories = [], onChooseCategory }: SiteFooterProps) {
+  const { user, isAdmin } = useAuth();
 
   return (
     <footer className="mt-12 w-full border-t border-white/8 bg-surface-container-lowest text-outline">
@@ -38,22 +39,40 @@ export function SiteFooter({ hasCategories, categories, onChooseCategory }: Site
             </p>
           </div>
 
-          <nav aria-label="Footer: inventory" className="space-y-3">
-            <h2 className={heading}>Inventory</h2>
-            {categories.length > 0 ? (
+          {user ? (
+            <nav aria-label="Footer: inventory" className="space-y-3">
+              <h2 className={heading}>Inventory</h2>
+              {categories.length > 0 ? (
+                <ul className="space-y-2">
+                  {categories.map((category) => (
+                    <li key={category.key}>
+                      <button type="button" className={link} onClick={() => onChooseCategory?.(category.key)}>
+                        {category.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs">No vehicles listed yet.</p>
+              )}
+            </nav>
+          ) : (
+            <nav aria-label="Footer: account" className="space-y-3">
+              <h2 className={heading}>Account</h2>
               <ul className="space-y-2">
-                {categories.map((category) => (
-                  <li key={category.key}>
-                    <button type="button" className={link} onClick={() => onChooseCategory(category.key)}>
-                      {category.label}
-                    </button>
-                  </li>
-                ))}
+                <li>
+                  <Link className={link} to="/login" state={{ from: "/" }}>
+                    Log in
+                  </Link>
+                </li>
+                <li>
+                  <Link className={link} to="/register" state={{ from: "/" }}>
+                    Create an account
+                  </Link>
+                </li>
               </ul>
-            ) : (
-              <p className="text-xs">No vehicles listed yet.</p>
-            )}
-          </nav>
+            </nav>
+          )}
 
           <nav aria-label="Footer: platform" className="space-y-3">
             <h2 className={heading}>Platform</h2>
@@ -86,7 +105,7 @@ export function SiteFooter({ hasCategories, categories, onChooseCategory }: Site
           <div className="space-y-3">
             <h2 className={heading}>Good to know</h2>
             <ul className="space-y-2 text-xs leading-relaxed">
-              <li>Signed in as {isAdmin ? "an administrator" : "a customer"}.</li>
+              {user && <li>Signed in as {isAdmin ? "an administrator" : "a customer"}.</li>}
               <li>Prices are shown in {config.currency}.</li>
               <li>The pictures on the cards are illustrations of a kind of car, not photographs of the vehicles themselves.</li>
             </ul>

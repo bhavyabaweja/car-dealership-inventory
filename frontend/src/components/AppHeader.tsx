@@ -1,5 +1,6 @@
 import { CarFront, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { BrandMark } from "./BrandMark";
 
@@ -11,13 +12,15 @@ interface AppHeaderProps {
 const desktopLink =
   "rounded text-sm font-medium text-outline transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-container";
 
-/** The bar across the top of every signed-in screen, as in the design: brand, where to go, who is signed in, and a menu on phones. */
+/** The bar across the top of the home page, as in the design: brand, where to go, who is signed in (or Log in and Sign up), and a menu on phones. */
 export function AppHeader({ hasCategories }: AppHeaderProps) {
   const { user, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const initials = user?.email.trim().slice(0, 2).toUpperCase() ?? "";
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}`; // where a visitor who logs in or signs up is brought back to
 
   const links = [
     { href: "#hero", label: "Home" },
@@ -60,27 +63,49 @@ export function AppHeader({ hasCategories }: AppHeaderProps) {
         </nav>
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-          <div className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/8 bg-surface-container py-1.5 pr-3 pl-1.5">
-            <span
-              aria-hidden="true"
-              className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-container to-secondary text-xs font-bold text-on-primary-container"
-            >
-              {initials}
-            </span>
-            <span className="hidden max-w-[10rem] truncate text-sm font-medium text-slate-200 sm:inline lg:max-w-[16rem]">{user?.email}</span>
-            {isAdmin && (
-              <span className="shrink-0 rounded-full bg-primary-container/15 px-2 py-0.5 text-[11px] font-bold text-primary ring-1 ring-primary-container/30 ring-inset">
-                Admin
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded px-1 text-xs font-medium text-outline transition-colors hover:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-container"
-          >
-            Sign out
-          </button>
+          {user ? (
+            <>
+              <div className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/8 bg-surface-container py-1.5 pr-3 pl-1.5">
+                <span
+                  aria-hidden="true"
+                  className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-container to-secondary text-xs font-bold text-on-primary-container"
+                >
+                  {initials}
+                </span>
+                <span className="hidden max-w-[10rem] truncate text-sm font-medium text-slate-200 sm:inline lg:max-w-[16rem]">{user.email}</span>
+                {isAdmin && (
+                  <span className="shrink-0 rounded-full bg-primary-container/15 px-2 py-0.5 text-[11px] font-bold text-primary ring-1 ring-primary-container/30 ring-inset">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded px-1 text-xs font-medium text-outline transition-colors hover:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-container"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            // A visitor: the design's Log in and Sign up. Both remember the page, so signing in brings them back to it.
+            <>
+              <Link
+                to="/login"
+                state={{ from }}
+                className="rounded-lg px-2 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-primary-container sm:px-3"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/register"
+                state={{ from }}
+                className="rounded-lg bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container shadow-glow transition-all hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container sm:px-4"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
 
           <button
             ref={menuButton}

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { AuthApi } from "../api/auth";
 import { freshToken, memoryStorage, NOW, userWithRole } from "../test/helpers";
 import { AuthProvider } from "./AuthProvider";
-import { GuestOnly, RequireAuth } from "./guards";
+import { GuestOnly } from "./guards";
 import { SESSION_KEY } from "./session";
 
 /** Shows where a redirect came from, so tests can check the person is sent back there after signing in. */
@@ -27,28 +27,13 @@ function renderApp(path: string, { signedIn, state }: { signedIn: boolean; state
     <AuthProvider authApi={authApi} storage={storage} now={() => NOW}>
       <MemoryRouter initialEntries={[{ pathname: new URL(path, "http://localhost").pathname, search: new URL(path, "http://localhost").search, state }]}>
         <Routes>
-          <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
         </Routes>
       </MemoryRouter>
     </AuthProvider>,
   );
 }
-
-describe("RequireAuth", () => {
-  it("shows the page to a signed-in user", () => {
-    renderApp("/", { signedIn: true });
-
-    expect(screen.getByText("dashboard")).toBeInTheDocument();
-  });
-
-  it("sends a signed-out visitor to the login page, remembering where they were headed", () => {
-    renderApp("/?make=toyota", { signedIn: false });
-
-    expect(screen.queryByText("dashboard")).not.toBeInTheDocument();
-    expect(screen.getByText("login page (from: /?make=toyota)")).toBeInTheDocument();
-  });
-});
 
 describe("GuestOnly", () => {
   it("shows the login page to a signed-out visitor", () => {

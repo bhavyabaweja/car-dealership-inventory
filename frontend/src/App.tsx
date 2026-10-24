@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppProviders } from "./AppProviders";
-import { GuestOnly, RequireAuth } from "./auth/guards";
-import { DashboardPage } from "./pages/DashboardPage";
+import { GuestOnly } from "./auth/guards";
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
@@ -11,7 +11,8 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
       <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
-      <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+      {/* The landing page for a visitor, the inventory for someone signed in. */}
+      <Route path="/" element={<HomePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

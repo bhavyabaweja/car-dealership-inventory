@@ -90,6 +90,21 @@ describe("the inventory section", () => {
   });
 });
 
+describe("the inventory section's own Log in", () => {
+  it("also keeps what has been typed in the search: no Enter needed", async () => {
+    landing();
+    await user().type(screen.getByLabelText("Make"), "toy");
+
+    await user().click(within(screen.getByRole("region", { name: "Available inventory" })).getByRole("link", { name: "Log in" }));
+    await user().type(screen.getByLabelText("Email"), "jane@example.com");
+    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
+    await user().click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
+  });
+});
+
 describe("the hero and the closing banner", () => {
   it("offers Explore inventory, and no Browse categories, which there are none to browse", () => {
     landing();

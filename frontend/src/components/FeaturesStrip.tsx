@@ -1,4 +1,6 @@
 import { ArrowRight, CarFront, PackageCheck, SlidersHorizontal, Zap } from "lucide-react";
+import { Link } from "react-router";
+import { useAuth } from "../auth/AuthProvider";
 
 /** What the app really does, in the design's four cards. Each sentence describes behaviour the app has and tests. */
 const FEATURES = [
@@ -56,8 +58,12 @@ export function FeaturesStrip() {
   );
 }
 
-/** The closing banner of the design. */
+/** The closing banner of the design. A visitor is invited to create an account, which is what opens the inventory. */
 export function FinalCta() {
+  const { user } = useAuth();
+  const callToAction =
+    "inline-flex items-center gap-2 rounded-xl bg-primary-container px-8 py-3.5 font-display text-sm font-bold text-on-primary-container transition-all hover:bg-primary hover:shadow-[0_0_20px_rgba(0,212,255,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container";
+
   return (
     <section aria-labelledby="cta-title" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
       <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-surface-container/75 p-8 text-center backdrop-blur-xl sm:p-14">
@@ -67,15 +73,21 @@ export function FinalCta() {
             Your next drive awaits.
           </h2>
           <p className="mb-8 text-sm leading-relaxed text-slate-300 sm:text-base">
-            Browse the inventory, check what is in stock, and buy when you are ready.
+            {user
+              ? "Browse the inventory, check what is in stock, and buy when you are ready."
+              : "Create an account to see the live inventory, check what is in stock, and buy when you are ready."}
           </p>
-          <a
-            href="#inventory"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary-container px-8 py-3.5 font-display text-sm font-bold text-on-primary-container transition-all hover:bg-primary hover:shadow-[0_0_20px_rgba(0,212,255,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container"
-          >
-            Browse all vehicles
-            <ArrowRight className="size-[18px]" aria-hidden="true" />
-          </a>
+          {user ? (
+            <a href="#inventory" className={callToAction}>
+              Browse all vehicles
+              <ArrowRight className="size-[18px]" aria-hidden="true" />
+            </a>
+          ) : (
+            <Link to="/register" state={{ from: "/" }} className={callToAction}>
+              Create an account
+              <ArrowRight className="size-[18px]" aria-hidden="true" />
+            </Link>
+          )}
         </div>
       </div>
     </section>
