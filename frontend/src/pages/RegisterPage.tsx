@@ -40,7 +40,7 @@ const showcase = (
         Your Journey <span className={HEADLINE_HIGHLIGHT}>Begins</span> Here.
       </>
     }
-    description="Create your account to browse the live inventory, see exactly what is in stock, and buy the vehicle you want."
+    description="Create your account to buy the vehicle you want from the live inventory."
     points={[
       { icon: PackageCheck, label: "Live stock levels" },
       { icon: Zap, label: "Buy in one click" },

@@ -1,48 +1,49 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { storedSession } from "../test/helpers";
+import { ApiError } from "../api/client";
+import { fakeVehiclesApi, sampleVehicles, storedSession, vehicle } from "../test/helpers";
 import { renderApp } from "../test/renderApp";
 
 vi.mock("../config", () => ({ config: { currency: "USD", locale: "en-US", apiBaseUrl: "" } }));
 
-// The Stitch design is the page a visitor sees BEFORE logging in. The API lets only signed-in users list vehicles
-// (and that is not changed), so this page sells the inventory, and asks for an account to open it.
+// The Stitch design is the page a visitor sees BEFORE logging in. The API lets anyone browse the vehicles, so the page
+// shows the real inventory, and asks for an account only at the point of buying.
 
 const user = () => userEvent.setup({ delay: null });
-const landing = (url = "/") => renderApp(url);
-const dialog = () => within(screen.getByRole("dialog", { name: "Account required" }));
+const landing = (url = "/", vehiclesApi = fakeVehiclesApi()) => renderApp(url, { vehiclesApi });
+const inventory = () => within(screen.getByRole("region", { name: "Available inventory" }));
+const cardOf = async (name: string) => within(await screen.findByRole("article", { name }));
+
+const logIn = async () => {
+  await user().type(screen.getByLabelText("Email address"), "jane@example.com");
+  await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
+  await user().click(screen.getByRole("button", { name: "Sign In" }));
+};
 
 describe("the page a visitor sees before logging in", () => {
-  it("is the home page when nobody is signed in, and asks the inventory for nothing", () => {
-    const { vehiclesApi } = landing();
+  it("is the home page when nobody is signed in", () => {
+    landing();
 
     expect(screen.getByRole("heading", { level: 1, name: /find your perfect drive/i })).toBeInTheDocument();
-    expect(vehiclesApi.find).not.toHaveBeenCalled();
-    expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 
-  it("is not what a signed-in user gets: they see the inventory", async () => {
+  it("is not what a signed-in user gets: they see the dashboard", async () => {
     renderApp("/", { stored: storedSession("USER") });
 
     expect(await screen.findAllByRole("article")).not.toHaveLength(0);
     expect(screen.queryByRole("link", { name: "Log in" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
   });
 
-  it("has the design's sections: hero, search, features, closing banner and footer", () => {
+  it("has the design's sections: hero, search, inventory, features, closing banner and footer", () => {
     landing();
 
     expect(screen.getByRole("search", { name: "Search and filters" })).toBeInTheDocument();
+    expect(inventory().getByRole("heading", { name: "Available inventory" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Why explore AutoVault?" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Your next drive awaits." })).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-  });
-
-  it("has no category cards, no vehicles and no way to buy: it knows no inventory", () => {
-    landing();
-
-    expect(screen.queryByRole("region", { name: "Browse by category" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^Purchase/ })).not.toBeInTheDocument();
   });
 });
 
@@ -69,9 +70,7 @@ describe("its header", () => {
     const { authApi } = landing("/?make=toy");
 
     await user().click(within(screen.getByRole("banner")).getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
-    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign In" }));
+    await logIn();
 
     expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
@@ -79,28 +78,132 @@ describe("its header", () => {
   });
 });
 
-describe("the inventory section", () => {
-  it("says the inventory is for signed-in visitors, and offers to log in or create an account", () => {
-    landing();
-    const section = within(screen.getByRole("region", { name: "Available inventory" }));
+describe("the inventory a visitor can see", () => {
+  it("is the real one: each vehicle with its category, price and stock, read without signing in", async () => {
+    const { vehiclesApi } = landing();
 
-    expect(section.getByText("Sign in to see the live inventory")).toBeInTheDocument();
-    expect(section.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
-    expect(section.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
+    const camry = await cardOf("Toyota Camry");
+    expect(camry.getByText("Sedan")).toBeInTheDocument();
+    expect(camry.getByText("$25,000.00")).toBeInTheDocument();
+    expect(camry.getByText("5 in stock")).toBeInTheDocument();
+    expect((await cardOf("Toyota RAV4")).getByText("Only 2 left")).toBeInTheDocument();
+    expect((await cardOf("Honda Civic")).getByText("Sold out")).toBeInTheDocument();
+    expect(vehiclesApi.find).toHaveBeenCalledWith({}, expect.anything());
+  });
+
+  it("keeps the order the server gave and counts the vehicles", async () => {
+    landing();
+
+    const names = (await screen.findAllByRole("article")).map((card) => within(card).getByRole("heading").textContent);
+
+    expect(names).toEqual(["Toyota Camry", "Toyota RAV4", "Honda Civic"]);
+    expect(await inventory().findByText("3 vehicles")).toBeInTheDocument();
+  });
+
+  it("says it is loading, then shows the vehicles", async () => {
+    let finish!: (vehicles: ReturnType<typeof sampleVehicles>) => void;
+    const api = fakeVehiclesApi();
+    api.find.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
+    landing("/", api);
+
+    expect(inventory().getByRole("status")).toHaveTextContent("Loading vehicles…");
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
+
+    finish(sampleVehicles());
+
+    expect(await screen.findAllByRole("article")).toHaveLength(3);
+  });
+
+  it("explains in plain words when loading fails, and tries again on request", async () => {
+    const api = fakeVehiclesApi();
+    api.find.mockRejectedValueOnce(new ApiError(0, "NETWORK_ERROR", "Could not reach the server. Check your connection and try again."));
+    landing("/", api);
+
+    expect(await inventory().findByRole("alert")).toHaveTextContent("Could not reach the server");
+    await user().click(inventory().getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findAllByRole("article")).toHaveLength(3);
+  });
+
+  it("says when there is nothing in stock to show yet", async () => {
+    const api = fakeVehiclesApi();
+    api.find.mockResolvedValue([]);
+    landing("/", api);
+
+    expect(await inventory().findByText("No vehicles available yet.")).toBeInTheDocument();
+  });
+
+  it("has no Purchase buttons: buying is for signed-in users", async () => {
+    landing();
+    await screen.findAllByRole("article");
+
+    expect(screen.queryByRole("button", { name: /^Purchase/ })).not.toBeInTheDocument();
   });
 });
 
-describe("the inventory section's own Log in", () => {
-  it("also keeps what has been typed in the search: no Enter needed", async () => {
+describe("buying, which needs an account", () => {
+  it("offers Log in to buy on a vehicle that is in stock, and nothing on a sold-out one", async () => {
+    landing();
+
+    const camry = await cardOf("Toyota Camry");
+    expect(camry.getByRole("link", { name: "Log in to purchase Toyota Camry" })).toHaveAttribute("href", "/login");
+    const civic = await cardOf("Honda Civic");
+    expect(civic.queryByRole("link")).not.toBeInTheDocument();
+    expect(civic.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("sends the person to log in and, once they are in, back to the inventory", async () => {
+    landing();
+
+    await user().click((await cardOf("Toyota RAV4")).getByRole("link", { name: "Log in to purchase Toyota RAV4" }));
+    await logIn();
+
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
+  });
+
+  it("says so beside the inventory, and offers to log in or create an account", () => {
+    landing();
+
+    expect(inventory().getByText(/browsing is open to everyone/i)).toBeInTheDocument();
+    expect(inventory().getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
+    expect(inventory().getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
+  });
+
+  it("remembers the search, whichever way the person goes to log in", async () => {
     landing();
     await user().type(screen.getByLabelText("Make"), "toy");
 
-    await user().click(within(screen.getByRole("region", { name: "Available inventory" })).getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
-    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign In" }));
+    await user().click(inventory().getByRole("link", { name: "Log in" }));
+    await logIn();
 
     expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
+  });
+
+  it("remembers the search when the person creates an account instead", async () => {
+    const { authApi } = landing();
+    await user().type(screen.getByLabelText("Make"), "toy");
+
+    await user().click(inventory().getByRole("link", { name: "Create an account" }));
+    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
+    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
+    await user().type(screen.getByLabelText("Confirm password"), "Sup3rSecret!");
+    await user().click(screen.getByRole("button", { name: "Create Account" }));
+
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(authApi.register).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
+  });
+
+  it("remembers the search when the way in is a vehicle's own Log in to buy", async () => {
+    landing();
+    await user().type(screen.getByLabelText("Make"), "toy");
+
+    await user().click((await cardOf("Toyota Camry")).getByRole("link", { name: "Log in to purchase Toyota Camry" }));
+    await logIn();
+
+    await screen.findByRole("heading", { name: "Vehicles" });
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
   });
 });
@@ -113,12 +216,13 @@ describe("the hero and the closing banner", () => {
     expect(screen.queryByRole("link", { name: "Browse categories" })).not.toBeInTheDocument();
   });
 
-  it("closes by offering to create an account, since that is what unlocks the inventory", () => {
+  it("closes by offering to create an account, since that is what lets a visitor buy", () => {
     landing();
     const banner = within(screen.getByRole("region", { name: "Your next drive awaits." }));
 
     expect(banner.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
-    expect(banner.queryByRole("link", { name: "Browse all vehicles" })).not.toBeInTheDocument();
+    expect(banner.getByText(/to buy/i)).toBeInTheDocument();
+    expect(banner.queryByText(/to see the live inventory/i)).not.toBeInTheDocument(); // anyone can see it
   });
 });
 
@@ -134,63 +238,74 @@ describe("the footer", () => {
 });
 
 describe("searching before logging in", () => {
-  it("lets the person fill in the console, and asks for an account when they search", async () => {
+  it("runs the search as the person types, once they pause, and shows what it finds", async () => {
+    const api = fakeVehiclesApi();
+    api.find.mockImplementation(async (filters: unknown) => ((filters as { make?: string }).make === "toy" ? sampleVehicles().slice(0, 2) : sampleVehicles()));
+    landing("/", api);
+    await screen.findAllByRole("article");
+
+    await user().type(screen.getByLabelText("Make"), "toy");
+
+    await waitFor(() => expect(api.find).toHaveBeenCalledWith({ make: "toy" }, expect.anything()));
+    await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(2));
+  });
+
+  it("does not run it before the pause, one request per keystroke", async () => {
+    const api = fakeVehiclesApi();
+    landing("/", api);
+    await screen.findAllByRole("article");
+    api.find.mockClear();
+
+    await user().type(screen.getByLabelText("Make"), "toyota");
+
+    await waitFor(() => expect(api.find).toHaveBeenCalledWith({ make: "toyota" }, expect.anything()));
+    expect(api.find).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts from the search in the address, as a link or a return from logging in brings it", async () => {
+    const api = fakeVehiclesApi();
+    landing("/?make=toy&maxPrice=30000", api);
+
+    expect(screen.getByLabelText("Make")).toHaveValue("toy");
+    await waitFor(() => expect(api.find).toHaveBeenCalledWith({ make: "toy", maxPrice: "30000" }, expect.anything()));
+  });
+
+  it("answers Enter by taking the person to the results, without opening a dialog or reloading", async () => {
     landing();
+    await screen.findAllByRole("article");
 
     await user().type(screen.getByLabelText("Make"), "toy{Enter}");
 
-    expect(screen.getByRole("dialog", { name: "Account required" })).toBeInTheDocument();
-    expect(dialog().getByText(/your search is kept and runs as soon as you sign in/i)).toBeInTheDocument();
-    expect(dialog().getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
-    expect(dialog().getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
-  });
-
-  it("also asks when the Search vehicles button is pressed with nothing typed", async () => {
-    landing();
-
-    await user().click(screen.getByRole("button", { name: "Search vehicles" }));
-
-    expect(screen.getByRole("dialog", { name: "Account required" })).toBeInTheDocument();
-  });
-
-  it("starts on Log in, and Keep browsing closes it and returns the cursor to where it was", async () => {
-    landing();
-    const make = screen.getByLabelText("Make");
-    await user().type(make, "toy{Enter}");
-    expect(dialog().getByRole("link", { name: "Log in" })).toHaveFocus();
-
-    await user().click(dialog().getByRole("button", { name: "Keep browsing" }));
-
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(make).toHaveFocus();
-    expect(make).toHaveValue("toy"); // what was typed is still there
+    expect(inventory().getByRole("heading", { name: "Available inventory" })).toHaveFocus();
   });
 
-  it("keeps the search through the login: once signed in, the inventory opens already searched", async () => {
-    const { authApi, vehiclesApi } = landing();
-    await user().type(screen.getByLabelText("Make"), "toy");
-    await user().type(screen.getByLabelText("Max price (USD)"), "30000{Enter}");
-
-    await user().click(dialog().getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
-    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign In" }));
-
-    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
-    expect(authApi.login).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy&maxPrice=30000");
-    expect(screen.getByLabelText("Make")).toHaveValue("toy");
-    // The dashboard searches after its short typing pause, which can land just after the heading appears.
-    await waitFor(() => expect(vehiclesApi.find).toHaveBeenCalledWith({ make: "toy", maxPrice: "30000" }, expect.anything()));
-  });
-
-  it("points a price that is not an amount out beside its field, and does not ask for an account yet", async () => {
-    landing();
+  it("points a price that is not an amount out beside its field, and does not search with it", async () => {
+    const api = fakeVehiclesApi();
+    landing("/", api);
+    await screen.findAllByRole("article");
+    api.find.mockClear();
 
     await user().type(screen.getByLabelText("Min price (USD)"), "abc{Enter}");
 
     expect(screen.getByLabelText("Min price (USD)")).toBeInvalid();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(api.find).not.toHaveBeenCalled();
+    expect(inventory().getByRole("heading", { name: "Available inventory" })).not.toHaveFocus(); // nothing to go to yet
+  });
+
+  it("says when nothing matches, and can show everything again", async () => {
+    const api = fakeVehiclesApi();
+    api.find.mockImplementation(async (filters: unknown) => ((filters as { make?: string }).make ? [] : [vehicle()]));
+    landing("/", api);
+    await screen.findAllByRole("article");
+
+    await user().type(screen.getByLabelText("Make"), "zzz");
+    expect(await inventory().findByText("No vehicles match your search.")).toBeInTheDocument();
+
+    await user().click(inventory().getByRole("button", { name: "Show all vehicles" }));
+
+    expect(await screen.findAllByRole("article")).toHaveLength(1);
+    expect(screen.getByLabelText("Make")).toHaveValue("");
   });
 
   it("can be started over with Clear filters, as on the inventory", async () => {

@@ -1,5 +1,6 @@
-import { PackagePlus, Pencil, ShoppingCart, Trash2 } from "lucide-react";
+import { LogIn, PackagePlus, Pencil, ShoppingCart, Trash2 } from "lucide-react";
 import { useId } from "react";
+import { Link } from "react-router";
 import type { Vehicle } from "../api/types";
 import { illustrationFor } from "../lib/vehicleIllustration";
 import { formatPrice } from "../lib/money";
@@ -45,9 +46,17 @@ interface VehicleCardProps {
   /** A purchase of this vehicle is in progress. */
   purchasing: boolean;
   admin?: AdminActions;
+  /** For a visitor who has not signed in: instead of Purchase, a link to log in first. A sold-out vehicle offers neither. */
+  loginToBuy?: { to: string; state?: unknown };
 }
 
-export function VehicleCard({ vehicle, onPurchase, purchasing, admin }: VehicleCardProps) {
+/** The look of the primary button, for a link that does what a button would. */
+const linkButton =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition-all " +
+  "bg-primary-container font-display font-bold text-on-primary-container hover:bg-primary hover:shadow-[0_0_15px_rgba(0,212,255,0.3)] " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-container";
+
+export function VehicleCard({ vehicle, onPurchase, purchasing, admin, loginToBuy }: VehicleCardProps) {
   const titleId = useId();
   const name = `${vehicle.make} ${vehicle.model}`;
   const soldOut = vehicle.quantity === 0;
@@ -106,6 +115,13 @@ export function VehicleCard({ vehicle, onPurchase, purchasing, admin }: VehicleC
                 </>
               )}
             </Button>
+          )}
+
+          {loginToBuy && !soldOut && (
+            <Link to={loginToBuy.to} state={loginToBuy.state} aria-label={`Log in to purchase ${name}`} className={linkButton}>
+              <LogIn className="size-4" aria-hidden="true" />
+              Log in to buy
+            </Link>
           )}
 
           {admin && (

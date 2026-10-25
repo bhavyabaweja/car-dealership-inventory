@@ -39,7 +39,10 @@ describe("the header of the signed-in app", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "Sign out" }));
 
     expect(screen.getByRole("heading", { level: 1, name: /find your perfect drive/i })).toBeInTheDocument();
-    expect(screen.queryByRole("article")).not.toBeInTheDocument(); // the inventory is for signed-in visitors
+    // Anyone may look at the inventory, but only a signed-in user may buy from it.
+    expect(await screen.findAllByRole("article")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: /^Purchase/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Log in to purchase Toyota Camry" })).toBeInTheDocument();
     expect(storage.items.has(SESSION_KEY)).toBe(false);
     expect(screen.queryByRole("status")).not.toBeInTheDocument(); // signing out is not an expiry
   });

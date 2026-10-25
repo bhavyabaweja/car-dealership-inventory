@@ -21,9 +21,10 @@ beforeEach(async () => {
 type Call = (agent: ReturnType<typeof request>, id: string) => request.Test;
 
 /** Every endpoint, who may call it, and what success looks like. */
-const endpoints: Array<{ name: string; adminOnly: boolean; success: number; call: Call }> = [
-  { name: "GET /api/vehicles", adminOnly: false, success: 200, call: (a) => a.get("/api/vehicles") },
-  { name: "GET /api/vehicles/search", adminOnly: false, success: 200, call: (a) => a.get("/api/vehicles/search?make=toy") },
+const endpoints: Array<{ name: string; adminOnly: boolean; publicRead?: boolean; success: number; call: Call }> = [
+  // Browsing is open to visitors who have not signed in: they can see the inventory, but not buy from it.
+  { name: "GET /api/vehicles", adminOnly: false, publicRead: true, success: 200, call: (a) => a.get("/api/vehicles") },
+  { name: "GET /api/vehicles/search", adminOnly: false, publicRead: true, success: 200, call: (a) => a.get("/api/vehicles/search?make=toy") },
   { name: "POST /api/vehicles/:id/purchase", adminOnly: false, success: 200, call: (a, id) => a.post(`/api/vehicles/${id}/purchase`) },
   { name: "POST /api/vehicles", adminOnly: true, success: 201, call: (a) => a.post("/api/vehicles").send({ ...camry, model: "Corolla" }) },
   { name: "PUT /api/vehicles/:id", adminOnly: true, success: 200, call: (a, id) => a.put(`/api/vehicles/${id}`).send({ make: "Lexus" }) },
@@ -31,7 +32,28 @@ const endpoints: Array<{ name: string; adminOnly: boolean; success: number; call
   { name: "POST /api/vehicles/:id/restock", adminOnly: true, success: 200, call: (a, id) => a.post(`/api/vehicles/${id}/restock`).send({ quantity: 3 }) },
 ];
 
-describe.each(endpoints)("access to $name", ({ adminOnly, success, call }) => {
+describe.each(endpoints)("access to $name", ({ adminOnly, publicRead, success, call }) => {
+  if (publicRead) {
+    it("needs no token: a visitor who is not signed in can browse", async () => {
+      const response = await call(request(ctx.app), vehicleId);
+
+      expect(response.status).toBe(success);
+      expect(response.headers).not.toHaveProperty("www-authenticate");
+    });
+
+    it("does not look at a token it is sent: a bad one is no reason to refuse a public page", async () => {
+      const response = await call(request(ctx.app), vehicleId).set(bearer("not-a-real-token"));
+
+      expect(response.status).toBe(success);
+    });
+
+    it("is allowed to a regular user and an administrator", async () => {
+      expect((await call(request(ctx.app), vehicleId).set(bearer(userToken))).status).toBe(success);
+      expect((await call(request(ctx.app), vehicleId).set(bearer(adminToken))).status).toBe(success);
+    });
+    return;
+  }
+
   it("needs a token", async () => {
     const response = await call(request(ctx.app), vehicleId);
 
@@ -111,6 +133,14 @@ describe("POST /api/vehicles", () => {
 });
 
 describe("GET /api/vehicles", () => {
+  it("shows a visitor who is not signed in the whole inventory, with the stock, and nothing about any user", async () => {
+    const response = await request(ctx.app).get("/api/vehicles");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([expect.objectContaining({ make: "Toyota", model: "Camry", quantity: 5, price: "25000.00" })]);
+    expect(JSON.stringify(response.body)).not.toMatch(/email|passwordHash|role/i);
+  });
+
   it("lists every vehicle, sold-out ones included, with prices as strings", async () => {
     await ctx.vehicles.create({ make: "Honda", model: "Civic", category: "Sedan", price: "22000.00", quantity: 0 });
 
@@ -223,6 +253,17 @@ describe("DELETE /api/vehicles/:id", () => {
 
     expect(response.status).toBe(404);
     expect(response.body.error.code).toBe("VEHICLE_NOT_FOUND");
+  });
+});
+
+describe("buying stays for signed-in users", () => {
+  it("is refused to a visitor, who changes nothing", async () => {
+    const before = JSON.stringify(ctx.vehicles.vehicles);
+
+    const response = await request(ctx.app).post(`/api/vehicles/${vehicleId}/purchase`);
+
+    expect(response.status).toBe(401);
+    expect(JSON.stringify(ctx.vehicles.vehicles)).toBe(before);
   });
 });
 
