@@ -5,6 +5,11 @@ signed-in customers can buy a vehicle; administrators manage the catalog and the
 
 Built test-first (red, then green, in separate commits) as a coding kata.
 
+**Live demo:** <https://car-dealership-inventory-brown.vercel.app>
+(frontend on Vercel, API on Render at `https://car-dealership-api-8hfo.onrender.com`, database on Neon).
+Anyone can browse; create a customer account to try buying. The API runs on Render's free plan, which sleeps when idle, so the first
+request after a quiet spell can take up to a minute.
+
 ![The page a visitor sees: the live inventory, with Log in to buy on each vehicle](docs/screenshots/02-landing-inventory.png)
 
 | | |
