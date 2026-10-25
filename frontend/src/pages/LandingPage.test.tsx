@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { storedSession } from "../test/helpers";
@@ -69,9 +69,9 @@ describe("its header", () => {
     const { authApi } = landing("/?make=toy");
 
     await user().click(within(screen.getByRole("banner")).getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email"), "jane@example.com");
+    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign in" }));
+    await user().click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledWith("jane@example.com", "Sup3rSecret!");
@@ -96,9 +96,9 @@ describe("the inventory section's own Log in", () => {
     await user().type(screen.getByLabelText("Make"), "toy");
 
     await user().click(within(screen.getByRole("region", { name: "Available inventory" })).getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email"), "jane@example.com");
+    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign in" }));
+    await user().click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
@@ -172,15 +172,16 @@ describe("searching before logging in", () => {
     await user().type(screen.getByLabelText("Max price (USD)"), "30000{Enter}");
 
     await user().click(dialog().getByRole("link", { name: "Log in" }));
-    await user().type(screen.getByLabelText("Email"), "jane@example.com");
+    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
     await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
-    await user().click(screen.getByRole("button", { name: "Sign in" }));
+    await user().click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
     expect(authApi.login).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy&maxPrice=30000");
     expect(screen.getByLabelText("Make")).toHaveValue("toy");
-    expect(vehiclesApi.find).toHaveBeenCalledWith({ make: "toy", maxPrice: "30000" }, expect.anything());
+    // The dashboard searches after its short typing pause, which can land just after the heading appears.
+    await waitFor(() => expect(vehiclesApi.find).toHaveBeenCalledWith({ make: "toy", maxPrice: "30000" }, expect.anything()));
   });
 
   it("points a price that is not an amount out beside its field, and does not ask for an account yet", async () => {
