@@ -2,7 +2,7 @@ import { LoaderCircle } from "lucide-react";
 import type { ComponentProps } from "react";
 
 type Variant = "primary" | "secondary" | "danger" | "dangerOutline" | "ghost";
-type Size = "md" | "sm";
+type Size = "lg" | "md" | "sm";
 
 interface ButtonProps extends ComponentProps<"button"> {
   variant?: Variant;
@@ -18,7 +18,7 @@ const base =
   "disabled:cursor-not-allowed disabled:opacity-50";
 
 // Small buttons are still 44px tall on touch screens, the smallest comfortable tap target.
-const sizes: Record<Size, string> = { md: "h-11 px-4 text-sm", sm: "h-11 px-3 text-sm sm:h-9" };
+const sizes: Record<Size, string> = { lg: "h-12 px-6 text-base", md: "h-11 px-4 text-sm", sm: "h-11 px-3 text-sm sm:h-9" };
 
 const variants: Record<Variant, string> = {
   // The updated design's call to action: solid electric cyan with midnight text, and a glow on hover.
