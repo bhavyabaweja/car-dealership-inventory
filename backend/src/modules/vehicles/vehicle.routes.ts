@@ -15,13 +15,14 @@ export interface VehicleRouteService {
 }
 
 /**
- * Everything here needs a signed-in user. Browsing and buying are open to any user;
- * changing the catalog or the stock levels is for administrators. `requireAdmin`
- * runs before the body is looked at, so a regular user learns nothing about validation.
+ * Browsing is public: anyone, signed in or not, may list and search the vehicles, so that a visitor can see what is
+ * for sale before making an account. Everything else needs a signed-in user: buying is open to any user, while
+ * changing the catalog or the stock levels is for administrators. `requireAdmin` runs before the body is looked at,
+ * so a regular user learns nothing about validation.
  */
 export function createVehicleRouter(vehicles: VehicleRouteService, tokens: TokenService): Router {
   const router = Router();
-  router.use(authenticate(tokens));
+  const signedIn = authenticate(tokens);
 
   router.get("/", async (_req, res) => {
     res.json(await vehicles.list());
@@ -31,25 +32,25 @@ export function createVehicleRouter(vehicles: VehicleRouteService, tokens: Token
     res.json(await vehicles.search(req.query));
   });
 
-  router.post("/", requireAdmin, async (req, res) => {
+  router.post("/", signedIn, requireAdmin, async (req, res) => {
     res.status(201).json(await vehicles.create(req.body));
   });
 
   // The explicit { id: string } tells TypeScript the path parameter's type, which it loses after middleware.
-  router.put<{ id: string }>("/:id", requireAdmin, async (req, res) => {
+  router.put<{ id: string }>("/:id", signedIn, requireAdmin, async (req, res) => {
     res.json(await vehicles.update(req.params.id, req.body));
   });
 
-  router.delete<{ id: string }>("/:id", requireAdmin, async (req, res) => {
+  router.delete<{ id: string }>("/:id", signedIn, requireAdmin, async (req, res) => {
     await vehicles.remove(req.params.id);
     res.status(204).end();
   });
 
-  router.post<{ id: string }>("/:id/purchase", async (req, res) => {
+  router.post<{ id: string }>("/:id/purchase", signedIn, async (req, res) => {
     res.json(await vehicles.purchase(req.params.id, req.body));
   });
 
-  router.post<{ id: string }>("/:id/restock", requireAdmin, async (req, res) => {
+  router.post<{ id: string }>("/:id/restock", signedIn, requireAdmin, async (req, res) => {
     res.json(await vehicles.restock(req.params.id, req.body));
   });
 

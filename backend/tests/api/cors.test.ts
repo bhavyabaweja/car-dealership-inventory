@@ -19,7 +19,7 @@ describe("an origin the API has been told to allow", () => {
   });
 
   it("is also named on errors, so the page can read why a request was refused", async () => {
-    const response = await request(app).get("/api/vehicles").set("Origin", APP); // no token: 401
+    const response = await request(app).post("/api/vehicles/some-id/purchase").set("Origin", APP); // no token: 401
 
     expect(response.status).toBe(401);
     expect(response.headers["access-control-allow-origin"]).toBe(APP);
@@ -88,7 +88,7 @@ describe("an origin that is not on the list", () => {
 
 describe("a request with no Origin header (same-origin pages, curl, health checks)", () => {
   it("is answered as before and gets no CORS headers", async () => {
-    const response = await request(appWith([APP])).get("/api/vehicles");
+    const response = await request(appWith([APP])).post("/api/vehicles/some-id/purchase");
 
     expect(response.status).toBe(401);
     expect(response.headers).not.toHaveProperty("access-control-allow-origin");
