@@ -164,6 +164,16 @@ describe("RegisterPage", () => {
       expect(screen.queryByText("Passwords do not match.")).not.toBeInTheDocument();
     });
 
+    it("keeps asking to be filled in when only the password is edited: that message is not about the comparison", async () => {
+      renderApp("/register");
+      const user = await createAccount("jane@example.com", "Sup3rSecret!", "");
+      expect(screen.getByText("Please confirm your password.")).toBeInTheDocument();
+
+      await user.type(screen.getByLabelText("Password"), "x");
+
+      expect(screen.getByText("Please confirm your password.")).toBeInTheDocument();
+    });
+
     it("lets a corrected pair through", async () => {
       const { authApi } = renderApp("/register");
       const user = await createAccount("jane@example.com", "Sup3rSecret!", "Sup3rSecret?");
