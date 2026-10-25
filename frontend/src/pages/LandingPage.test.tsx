@@ -181,6 +181,21 @@ describe("buying, which needs an account", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
   });
 
+  it("remembers the search when the person creates an account instead", async () => {
+    const { authApi } = landing();
+    await user().type(screen.getByLabelText("Make"), "toy");
+
+    await user().click(inventory().getByRole("link", { name: "Create an account" }));
+    await user().type(screen.getByLabelText("Email address"), "jane@example.com");
+    await user().type(screen.getByLabelText("Password"), "Sup3rSecret!");
+    await user().type(screen.getByLabelText("Confirm password"), "Sup3rSecret!");
+    await user().click(screen.getByRole("button", { name: "Create Account" }));
+
+    expect(await screen.findByRole("heading", { name: "Vehicles" })).toBeInTheDocument();
+    expect(authApi.register).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("location")).toHaveTextContent("/?make=toy");
+  });
+
   it("remembers the search when the way in is a vehicle's own Log in to buy", async () => {
     landing();
     await user().type(screen.getByLabelText("Make"), "toy");
@@ -275,6 +290,7 @@ describe("searching before logging in", () => {
 
     expect(screen.getByLabelText("Min price (USD)")).toBeInvalid();
     expect(api.find).not.toHaveBeenCalled();
+    expect(inventory().getByRole("heading", { name: "Available inventory" })).not.toHaveFocus(); // nothing to go to yet
   });
 
   it("says when nothing matches, and can show everything again", async () => {

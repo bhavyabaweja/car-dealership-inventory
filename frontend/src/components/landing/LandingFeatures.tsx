@@ -57,7 +57,7 @@ export function LandingFeatures() {
   );
 }
 
-/** The closing banner of the design. A visitor is invited to create an account, which is what opens the inventory. */
+/** The closing banner of the design. A visitor is invited to create an account, which is what lets them buy. */
 export function LandingCta() {
   return (
     <section aria-labelledby="cta-title" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
@@ -68,7 +68,7 @@ export function LandingCta() {
             Your next drive awaits.
           </h2>
           <p className="mb-8 text-sm leading-relaxed text-slate-300 sm:text-base">
-            Create an account to see the live inventory, check what is in stock, and buy when you are ready.
+            Create an account to buy from the live inventory when you are ready.
           </p>
           <Link
             to="/register"

@@ -45,7 +45,7 @@ const showcase = (
         Your Journey <span className={HEADLINE_HIGHLIGHT}>Starts Here.</span>
       </>
     }
-    description="Sign in to explore exceptional vehicles, see exactly how many are in stock, and buy the one you want."
+    description="Sign in to buy the vehicle you want from the live inventory, with exactly how many are in stock."
     points={[
       { icon: Search, label: "Search the inventory" },
       { icon: Zap, label: "Buy in one click" },
