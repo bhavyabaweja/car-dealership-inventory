@@ -28,7 +28,7 @@ describe("page titles", () => {
   it("follows the person from page to page", async () => {
     renderApp("/login");
 
-    await userEvent.setup().click(screen.getByRole("link", { name: "Create an account" }));
+    await userEvent.setup().click(screen.getByRole("link", { name: "Create Account" }));
 
     expect(await screen.findByRole("heading", { name: /create/i })).toBeInTheDocument();
     expect(document.title).toBe("Create an account | AutoVault");
